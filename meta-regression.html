@@ -680,6 +680,9 @@ tr:hover td { background: var(--primary-light); }
       <div><button class="btn btn-primary" id="btnExportCSV">Export CSV</button></div>
       <div><button class="btn btn-primary" id="btnExportJSON">Export JSON</button></div>
       <div><button class="btn btn-secondary" id="btnPrint">Print Report</button></div>
+      <div><button class="btn btn-primary" id="btnExportMAIF" style="background:#2563eb;">Export MAIF</button></div>
+      <div><button class="btn btn-primary" id="btnImportMAIF" style="background:#16a34a;">Import MAIF</button></div>
+      <input type="file" id="maifFileInput" accept=".json" style="display:none;">
     </div>
   </div>
 </div>
@@ -2566,6 +2569,96 @@ tr:hover td { background: var(--primary-light); }
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
+
+  // ============================
+  // MAIF IMPORT / EXPORT
+  // ============================
+  document.getElementById('btnExportMAIF').addEventListener('click', function() {
+    readGridIntoState();
+    if (!STATE.validated || STATE.studies.length === 0) {
+      notify('No data to export', 'error');
+      return;
+    }
+    var studies = STATE.studies.map(function(s) {
+      var entry = { id: s.name, yi: s.yi, sei: s.se };
+      if (s.mods && Object.keys(s.mods).length > 0) {
+        entry.moderators = s.mods;
+      }
+      return entry;
+    });
+    var maif = {
+      version: '1.0',
+      metadata: {
+        effectType: 'generic',
+        createdBy: 'MetaRegressionWorkbench',
+        createdAt: new Date().toISOString()
+      },
+      studies: studies
+    };
+    if (STATE.moderators && STATE.moderators.length > 0) {
+      maif.metadata.moderators = STATE.moderators;
+    }
+    if (STATE.lastModel) {
+      maif.results = {
+        regression: {
+          coefficients: STATE.lastModel.coeffs,
+          tau2base: STATE.lastModel.tau2base,
+          tau2res: STATE.lastModel.tau2res,
+          R2: STATE.lastModel.R2,
+          I2res: STATE.lastModel.I2res,
+          QM: STATE.lastModel.QM,
+          pQM: STATE.lastModel.pQM,
+          QE: STATE.lastModel.QE,
+          pQE: STATE.lastModel.pQE,
+          AIC: STATE.lastModel.AIC,
+          BIC: STATE.lastModel.BIC
+        }
+      };
+    }
+    downloadFile(JSON.stringify(maif, null, 2), 'meta-regression-maif.json', 'application/json');
+    notify('MAIF exported', 'success');
+  });
+
+  document.getElementById('btnImportMAIF').addEventListener('click', function() {
+    document.getElementById('maifFileInput').click();
+  });
+
+  document.getElementById('maifFileInput').addEventListener('change', function() {
+    if (!this.files || !this.files[0]) return;
+    var file = this.files[0];
+    var self = this;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var maif = JSON.parse(e.target.result);
+        if (!maif.version || !maif.studies || !Array.isArray(maif.studies)) {
+          notify('Invalid MAIF file: missing version or studies array.', 'error');
+          return;
+        }
+        // Extract moderator definitions if present
+        if (maif.metadata && maif.metadata.moderators && Array.isArray(maif.metadata.moderators)) {
+          STATE.moderators = maif.metadata.moderators;
+          document.getElementById('numModerators').value = String(STATE.moderators.length || 1);
+          renderModeratorConfig();
+        }
+        STATE.studies = maif.studies.map(function(s) {
+          return {
+            name: s.id || '',
+            yi: (s.yi != null && isFinite(Number(s.yi))) ? Number(s.yi) : null,
+            se: (s.sei != null && isFinite(Number(s.sei))) ? Number(s.sei) : null,
+            mods: s.moderators || {}
+          };
+        });
+        STATE.validated = false;
+        renderDataGrid();
+        notify('Imported ' + maif.studies.length + ' studies from MAIF.', 'success');
+      } catch (err) {
+        notify('Failed to parse MAIF file: ' + err.message, 'error');
+      }
+      self.value = '';
+    };
+    reader.readAsText(file);
+  });
 
   // ============================
   // SAVE / LOAD STATE
