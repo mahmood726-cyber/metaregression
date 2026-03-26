@@ -705,6 +705,14 @@ tr:hover td { background: var(--primary-light); }
       .replace(/'/g, '&#039;');
   }
 
+  function csvSafe(s) {
+    if (s == null) return '';
+    s = String(s);
+    if (/^[=+@\t\r]/.test(s)) s = "'" + s;
+    if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
   // ============================
   // UTILITY: Format number
   // ============================
@@ -1608,7 +1616,8 @@ tr:hover td { background: var(--primary-light); }
     var seFactor = 1;
     var dfResid = n - p;
     if (useKH && dfResid > 0) {
-      seFactor = Math.sqrt(QEfinal / dfResid);
+      // Floor at 1 to prevent anti-conservative results (Rover et al. 2015)
+      seFactor = Math.max(1, Math.sqrt(QEfinal / dfResid));
     }
 
     // Coefficient SEs and p-values
@@ -1649,8 +1658,8 @@ tr:hover td { background: var(--primary-light); }
     var pQE = QE_df > 0 ? (1 - chiSqCDF(QEfinal, QE_df)) : 1;
 
     if (useKH && QM_df > 0 && QE_df > 0) {
-      // Use F-test for QM under KH
-      var Fstat = QM / QM_df;
+      // Use F-test for QM under KH: divide QM by seFactor^2 to account for inflation
+      var Fstat = (QM / (seFactor * seFactor)) / QM_df;
       pQM = 1 - fCDF(Fstat, QM_df, QE_df);
     }
 
