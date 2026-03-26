@@ -1,0 +1,2616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MetaRegression Workbench v1.0 | Browser-Based Mixed-Effects Meta-Regression</title>
+<meta name="description" content="The world's first browser-based meta-regression workbench. Mixed-effects models, bubble plots, permutation tests, model comparison.">
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg: #f8f9fa;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6c757d;
+  --text-heading: #0d1b2a;
+  --border: #dee2e6;
+  --border-focus: #4361ee;
+  --primary: #4361ee;
+  --primary-hover: #3a56d4;
+  --primary-light: #e8ecff;
+  --success: #2ec4b6;
+  --success-bg: #e8f8f5;
+  --danger: #e63946;
+  --danger-bg: #fde8ea;
+  --warning: #f4a261;
+  --warning-bg: #fef5e7;
+  --info: #457b9d;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Consolas', 'Monaco', monospace;
+  --transition: 0.2s ease;
+}
+
+/* ===== Dark Mode ===== */
+body.dark-mode {
+  --bg: #0d1b2a;
+  --bg-card: #1b2838;
+  --bg-input: #253347;
+  --text: #e0e0e0;
+  --text-muted: #8899aa;
+  --text-heading: #f0f0f0;
+  --border: #2d3f54;
+  --border-focus: #5a78f0;
+  --primary: #5a78f0;
+  --primary-hover: #6e8af5;
+  --primary-light: #1e2d4a;
+  --success: #2ec4b6;
+  --success-bg: #1a3330;
+  --danger: #ff6b6b;
+  --danger-bg: #3a1a1a;
+  --warning: #f4a261;
+  --warning-bg: #3a2a1a;
+  --info: #6dafd4;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.app-header {
+  background: linear-gradient(135deg, #1b2838 0%, #0d1b2a 100%);
+  color: #fff;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-header .subtitle {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-left: 12px;
+}
+
+.header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-icon {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.btn-icon:hover { background: rgba(255,255,255,0.2); }
+
+/* ===== Tab Navigation ===== */
+.tab-nav {
+  display: flex;
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--border);
+  padding: 0 16px;
+  overflow-x: auto;
+}
+
+.tab-nav [role="tab"] {
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.tab-nav [role="tab"]:hover {
+  color: var(--text);
+  background: var(--primary-light);
+}
+
+.tab-nav [role="tab"][aria-selected="true"] {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ===== Tab Panels ===== */
+[role="tabpanel"] {
+  display: none;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+[role="tabpanel"].active { display: block; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.card h2, .card h3 {
+  color: var(--text-heading);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.card h3 { font-size: 1rem; }
+
+/* ===== Form Elements ===== */
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+input, select, textarea {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text);
+  transition: var(--transition);
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(67,97,238,0.15);
+}
+
+textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+  min-height: 180px;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover { background: var(--primary-hover); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-secondary:hover { background: var(--primary-light); }
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Tables ===== */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th, td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background: var(--primary-light);
+  color: var(--text-heading);
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+}
+
+tr:hover td { background: var(--primary-light); }
+
+/* ===== Data Grid ===== */
+.data-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.data-grid input {
+  padding: 6px 8px;
+  font-size: 0.82rem;
+}
+
+.data-grid-header {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 4px 0;
+  text-align: center;
+}
+
+/* ===== Inline Groups ===== */
+.inline-group {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.inline-group > div { flex: 1; min-width: 120px; }
+
+/* ===== Checkbox ===== */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+/* ===== Status Badges ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-info { background: var(--primary-light); color: var(--primary); }
+
+/* ===== SVG Charts ===== */
+.chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.chart-container svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ===== Split Layout ===== */
+.split-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.split-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .split-2, .split-3 { grid-template-columns: 1fr; }
+}
+
+/* ===== Highlight Row ===== */
+.highlight-row { background: var(--success-bg) !important; }
+
+/* ===== Code Block ===== */
+.code-block {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 16px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ===== Methods Text ===== */
+.methods-text {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--text);
+  max-width: 800px;
+}
+
+.methods-text p { margin-bottom: 12px; }
+
+/* ===== Notification ===== */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  z-index: 9999;
+  animation: slideIn 0.3s ease;
+  max-width: 400px;
+}
+
+.notification.success { background: var(--success); }
+.notification.error { background: var(--danger); }
+.notification.info { background: var(--info); }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* ===== Loading ===== */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 6px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Misc ===== */
+.text-muted { color: var(--text-muted); }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }
+.gap-1 { gap: 8px; }
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="app-header">
+  <div style="display:flex;align-items:baseline;">
+    <h1>MetaRegression Workbench</h1>
+    <span class="subtitle">v1.0 &mdash; Mixed-Effects Meta-Regression</span>
+  </div>
+  <div class="header-controls">
+    <button class="btn-icon" id="btnDarkMode" title="Toggle dark mode" aria-label="Toggle dark mode">Dark Mode</button>
+    <button class="btn-icon" id="btnSaveState" title="Save session">Save</button>
+    <button class="btn-icon" id="btnLoadState" title="Load session">Load</button>
+  </div>
+</header>
+
+<!-- ===== TAB NAV ===== -->
+<nav class="tab-nav" role="tablist" aria-label="Main navigation">
+  <button role="tab" id="tab-data" aria-controls="panel-data" aria-selected="true">1. Data Input</button>
+  <button role="tab" id="tab-regression" aria-controls="panel-regression" aria-selected="false">2. Regression Analysis</button>
+  <button role="tab" id="tab-viz" aria-controls="panel-viz" aria-selected="false">3. Visualizations</button>
+  <button role="tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false">4. Model Comparison</button>
+  <button role="tab" id="tab-report" aria-controls="panel-report" aria-selected="false">5. Report</button>
+</nav>
+
+<!-- ===== TAB 1: DATA INPUT ===== -->
+<div role="tabpanel" id="panel-data" aria-labelledby="tab-data" class="active">
+  <div class="card">
+    <h2>Data Entry</h2>
+    <p class="text-muted mb-1">Enter study-level data: study name, effect size (yi), standard error (SE), and up to 5 moderator variables.</p>
+
+    <div class="inline-group">
+      <div>
+        <label for="numModerators">Number of Moderators (1-5)</label>
+        <input type="number" id="numModerators" min="1" max="5" value="1">
+      </div>
+      <div>
+        <button class="btn btn-primary" id="btnSetModerators">Set Moderators</button>
+      </div>
+    </div>
+
+    <div id="moderatorConfig" class="mb-2">
+      <!-- Moderator name/type config rows injected here -->
+    </div>
+
+    <div class="inline-group mb-1">
+      <div>
+        <button class="btn btn-secondary" id="btnLoadBCG">Load BCG Vaccine Example</button>
+      </div>
+      <div>
+        <button class="btn btn-secondary" id="btnLoadExercise">Load Exercise/Depression Example</button>
+      </div>
+      <div>
+        <button class="btn btn-secondary" id="btnClearData">Clear Data</button>
+      </div>
+    </div>
+
+    <div class="mb-1">
+      <label for="csvPaste">Paste CSV (header row required: study, yi, se, mod1, mod2, ...)</label>
+      <textarea id="csvPaste" placeholder="study,yi,se,latitude&#10;Aronson 1948,-0.8893,0.4073,44&#10;Ferguson 1949,-1.5854,0.5715,55&#10;..."></textarea>
+    </div>
+    <button class="btn btn-primary mb-2" id="btnParseCSV">Parse CSV</button>
+
+    <div id="dataGridContainer">
+      <!-- Data grid injected here -->
+    </div>
+
+    <div class="mt-2">
+      <button class="btn btn-success" id="btnValidateData">Validate &amp; Proceed</button>
+      <span id="dataStatus" class="text-muted" style="margin-left:12px;"></span>
+    </div>
+  </div>
+
+  <div class="card" id="dataSummaryCard" style="display:none;">
+    <h3>Data Summary</h3>
+    <div id="dataSummary"></div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: REGRESSION ANALYSIS ===== -->
+<div role="tabpanel" id="panel-regression" aria-labelledby="tab-regression">
+  <div class="split-2">
+    <div class="card">
+      <h2>Model Specification</h2>
+      <p class="text-muted mb-1">Select moderators to include in the mixed-effects meta-regression model.</p>
+      <div id="modCheckboxes" class="checkbox-group mb-2">
+        <!-- Moderator checkboxes injected -->
+      </div>
+
+      <div class="mb-1">
+        <label>
+          <input type="checkbox" id="chkKnappHartung"> Knapp-Hartung adjustment (t-distribution)
+        </label>
+      </div>
+
+      <div class="mb-1">
+        <label>
+          <input type="checkbox" id="chkPermutation"> Permutation test (1000 iterations)
+        </label>
+      </div>
+
+      <div class="mb-1">
+        <label for="permSeed">Permutation seed</label>
+        <input type="number" id="permSeed" value="42" style="width:100px;">
+      </div>
+
+      <button class="btn btn-primary mt-1" id="btnRunRegression">Run Meta-Regression</button>
+    </div>
+
+    <div class="card">
+      <h2>Model Summary</h2>
+      <div id="modelSummary">
+        <p class="text-muted">Run a model to see results.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="coeffTableCard" style="display:none;">
+    <h2>Coefficient Table</h2>
+    <div class="table-wrap" id="coeffTableWrap"></div>
+  </div>
+
+  <div class="card" id="fitStatsCard" style="display:none;">
+    <h2>Model Fit Statistics</h2>
+    <div id="fitStats"></div>
+  </div>
+
+  <div class="card" id="permResultsCard" style="display:none;">
+    <h2>Permutation Test Results</h2>
+    <div id="permResults"></div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: VISUALIZATIONS ===== -->
+<div role="tabpanel" id="panel-viz" aria-labelledby="tab-viz">
+  <div class="card">
+    <h2>Visualization Controls</h2>
+    <div class="inline-group">
+      <div>
+        <label for="vizModerator">Select Moderator</label>
+        <select id="vizModerator"></select>
+      </div>
+      <div>
+        <button class="btn btn-primary" id="btnGenerateViz">Generate Plots</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-container" id="bubblePlotContainer" style="display:none;">
+    <h3 class="mb-1">Bubble Plot</h3>
+    <div id="bubblePlot"></div>
+  </div>
+
+  <div class="chart-container" id="subgroupForestContainer" style="display:none;">
+    <h3 class="mb-1">Subgroup Forest Plot</h3>
+    <div id="subgroupForest"></div>
+  </div>
+
+  <div class="split-2">
+    <div class="chart-container" id="residFittedContainer" style="display:none;">
+      <h3 class="mb-1">Studentized Residuals vs Fitted</h3>
+      <div id="residFittedPlot"></div>
+    </div>
+    <div class="chart-container" id="qqPlotContainer" style="display:none;">
+      <h3 class="mb-1">Normal Q-Q Plot of Residuals</h3>
+      <div id="qqPlot"></div>
+    </div>
+  </div>
+
+  <div class="split-2">
+    <div class="chart-container" id="cooksContainer" style="display:none;">
+      <h3 class="mb-1">Cook's Distance</h3>
+      <div id="cooksPlot"></div>
+    </div>
+    <div class="chart-container" id="hatContainer" style="display:none;">
+      <h3 class="mb-1">Hat Values (Leverage)</h3>
+      <div id="hatPlot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: MODEL COMPARISON ===== -->
+<div role="tabpanel" id="panel-compare" aria-labelledby="tab-compare">
+  <div class="card">
+    <h2>Model Comparison</h2>
+    <p class="text-muted mb-1">Compares all single-moderator models and the full model. Best model highlighted.</p>
+    <button class="btn btn-primary mb-2" id="btnRunComparison">Run All Model Comparisons</button>
+    <div class="table-wrap" id="comparisonTable"></div>
+  </div>
+
+  <div class="card" id="multiModelCard" style="display:none;">
+    <h2>Multi-Model Inference</h2>
+    <div id="multiModelInference"></div>
+  </div>
+</div>
+
+<!-- ===== TAB 5: REPORT ===== -->
+<div role="tabpanel" id="panel-report" aria-labelledby="tab-report">
+  <div class="card">
+    <h2>Methods Text</h2>
+    <div id="methodsText" class="methods-text">
+      <p class="text-muted">Run a regression model first to generate the methods text.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>R Code Equivalent (metafor)</h2>
+    <div id="rCode" class="code-block">
+# Run a regression model first to generate R code
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Export</h2>
+    <div class="inline-group">
+      <div><button class="btn btn-primary" id="btnExportCSV">Export CSV</button></div>
+      <div><button class="btn btn-primary" id="btnExportJSON">Export JSON</button></div>
+      <div><button class="btn btn-secondary" id="btnPrint">Print Report</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN SCRIPT ===== -->
+<script>
+(function() {
+  'use strict';
+
+  // ============================
+  // UTILITY: escapeHtml
+  // ============================
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ============================
+  // UTILITY: Format number
+  // ============================
+  function fmt(x, d) {
+    if (x == null || !isFinite(x)) return '---';
+    d = d != null ? d : 4;
+    return Number(x).toFixed(d);
+  }
+
+  function fmtP(p) {
+    if (p == null || !isFinite(p)) return '---';
+    if (p < 0.001) return '<0.001';
+    return p.toFixed(4);
+  }
+
+  // ============================
+  // UTILITY: Notifications
+  // ============================
+  function notify(msg, type) {
+    type = type || 'info';
+    var el = document.createElement('div');
+    el.className = 'notification ' + type;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 3500);
+  }
+
+  // ============================
+  // PRNG: xoshiro128** (seeded)
+  // ============================
+  function xoshiro128ss(seed) {
+    var s = [seed >>> 0, (seed * 2654435761) >>> 0, (seed * 2246822519) >>> 0, (seed * 3266489917) >>> 0];
+    // Ensure non-zero
+    if ((s[0] | s[1] | s[2] | s[3]) === 0) { s[0] = 1; }
+    function rotl(x, k) { return ((x << k) | (x >>> (32 - k))) >>> 0; }
+    return function() {
+      var result = (rotl((s[1] * 5) >>> 0, 7) * 9) >>> 0;
+      var t = (s[1] << 9) >>> 0;
+      s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3];
+      s[2] ^= t;
+      s[3] = rotl(s[3], 11);
+      return (result >>> 0) / 4294967296;
+    };
+  }
+
+  // ============================
+  // MATRIX OPERATIONS (pure JS)
+  // ============================
+  function matCreate(rows, cols, fill) {
+    fill = fill != null ? fill : 0;
+    var m = [];
+    for (var i = 0; i < rows; i++) {
+      m[i] = [];
+      for (var j = 0; j < cols; j++) m[i][j] = fill;
+    }
+    return m;
+  }
+
+  function matTranspose(A) {
+    var r = A.length, c = A[0].length;
+    var T = matCreate(c, r);
+    for (var i = 0; i < r; i++)
+      for (var j = 0; j < c; j++)
+        T[j][i] = A[i][j];
+    return T;
+  }
+
+  function matMul(A, B) {
+    var rA = A.length, cA = A[0].length, cB = B[0].length;
+    var C = matCreate(rA, cB);
+    for (var i = 0; i < rA; i++)
+      for (var j = 0; j < cB; j++) {
+        var sum = 0;
+        for (var k = 0; k < cA; k++) sum += A[i][k] * B[k][j];
+        C[i][j] = sum;
+      }
+    return C;
+  }
+
+  function matDiag(arr) {
+    var n = arr.length;
+    var D = matCreate(n, n);
+    for (var i = 0; i < n; i++) D[i][i] = arr[i];
+    return D;
+  }
+
+  // Gauss-Jordan inverse
+  function matInverse(M) {
+    var n = M.length;
+    var aug = matCreate(n, 2 * n);
+    for (var i = 0; i < n; i++) {
+      for (var j = 0; j < n; j++) aug[i][j] = M[i][j];
+      aug[i][n + i] = 1;
+    }
+    for (var col = 0; col < n; col++) {
+      var maxRow = col;
+      for (var row = col + 1; row < n; row++) {
+        if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) maxRow = row;
+      }
+      var tmp = aug[col]; aug[col] = aug[maxRow]; aug[maxRow] = tmp;
+      if (Math.abs(aug[col][col]) < 1e-14) return null;
+      var pivot = aug[col][col];
+      for (var j2 = 0; j2 < 2 * n; j2++) aug[col][j2] /= pivot;
+      for (var row2 = 0; row2 < n; row2++) {
+        if (row2 !== col) {
+          var factor = aug[row2][col];
+          for (var j3 = 0; j3 < 2 * n; j3++) aug[row2][j3] -= factor * aug[col][j3];
+        }
+      }
+    }
+    var inv = matCreate(n, n);
+    for (var i2 = 0; i2 < n; i2++)
+      for (var j4 = 0; j4 < n; j4++)
+        inv[i2][j4] = aug[i2][n + j4];
+    return inv;
+  }
+
+  // Solve Ax = b via LU-like approach (just use inverse for small systems)
+  function matSolve(A, b) {
+    var Ainv = matInverse(A);
+    if (!Ainv) return null;
+    // b is column vector as 2D
+    return matMul(Ainv, b);
+  }
+
+  // ============================
+  // STATISTICS: Normal distribution
+  // ============================
+  function normalCDF(x) {
+    // Abramowitz & Stegun approximation
+    if (x < -8) return 0;
+    if (x > 8) return 1;
+    var sign = x < 0 ? -1 : 1;
+    x = Math.abs(x);
+    var t = 1 / (1 + 0.2316419 * x);
+    var d = 0.3989422804014327; // 1/sqrt(2*pi)
+    var p = d * Math.exp(-x * x / 2);
+    var a = ((((1.330274429 * t - 1.821255978) * t + 1.781477937) * t - 0.356563782) * t + 0.319381530) * t;
+    return sign === 1 ? 1 - p * a : p * a;
+  }
+
+  function normalQuantile(p) {
+    // Rational approximation (Beasley-Springer-Moro)
+    if (p <= 0) return -Infinity;
+    if (p >= 1) return Infinity;
+    if (p === 0.5) return 0;
+    var a = [
+      -3.969683028665376e+01, 2.209460984245205e+02,
+      -2.759285104469687e+02, 1.383577518672690e+02,
+      -3.066479806614716e+01, 2.506628277459239e+00
+    ];
+    var b = [
+      -5.447609879822406e+01, 1.615858368580409e+02,
+      -1.556989798598866e+02, 6.680131188771972e+01,
+      -1.328068155288572e+01
+    ];
+    var c = [
+      -7.784894002430293e-03, -3.223964580411365e-01,
+      -2.400758277161838e+00, -2.549732539343734e+00,
+       4.374664141464968e+00, 2.938163982698783e+00
+    ];
+    var d = [
+      7.784695709041462e-03, 3.224671290700398e-01,
+      2.445134137142996e+00, 3.754408661907416e+00
+    ];
+    var pLow = 0.02425, pHigh = 1 - pLow;
+    var q, r;
+    if (p < pLow) {
+      q = Math.sqrt(-2 * Math.log(p));
+      return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+             ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    } else if (p <= pHigh) {
+      q = p - 0.5;
+      r = q * q;
+      return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+             (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+    } else {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+              ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    }
+  }
+
+  // ============================
+  // STATISTICS: Chi-squared CDF (Wilson-Hilferty)
+  // ============================
+  function chiSqCDF(x, df) {
+    if (df <= 0 || x < 0) return 0;
+    // Use normal approximation (Wilson-Hilferty)
+    var z = Math.pow(x / df, 1/3) - (1 - 2 / (9 * df));
+    z /= Math.sqrt(2 / (9 * df));
+    return normalCDF(z);
+  }
+
+  function chiSqQuantile(p, df) {
+    // Wilson-Hilferty inverse
+    var z = normalQuantile(p);
+    var val = df * Math.pow(1 - 2/(9*df) + z * Math.sqrt(2/(9*df)), 3);
+    return Math.max(0, val);
+  }
+
+  // ============================
+  // STATISTICS: t-distribution CDF (approximation)
+  // ============================
+  function tCDF(t, df) {
+    // Use regularized incomplete beta
+    var x = df / (df + t * t);
+    var a = df / 2, b2 = 0.5;
+    var ibeta = regIncBeta(x, a, b2);
+    if (t >= 0) return 1 - 0.5 * ibeta;
+    return 0.5 * ibeta;
+  }
+
+  function tQuantile(p, df) {
+    // Newton's method from normal approximation start
+    if (df >= 300) return normalQuantile(p);
+    var x = normalQuantile(p);
+    // Refine with a few Newton iterations
+    for (var i = 0; i < 10; i++) {
+      var cdf = tCDF(x, df);
+      var pdf = tPDF(x, df);
+      if (Math.abs(pdf) < 1e-15) break;
+      var dx = (cdf - p) / pdf;
+      x -= dx;
+      if (Math.abs(dx) < 1e-10) break;
+    }
+    return x;
+  }
+
+  function tPDF(t, df) {
+    var c = Math.exp(lnGamma((df + 1) / 2) - lnGamma(df / 2)) / Math.sqrt(df * Math.PI);
+    return c * Math.pow(1 + t * t / df, -(df + 1) / 2);
+  }
+
+  // Regularized incomplete beta (continued fraction)
+  function regIncBeta(x, a, b2) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    var lnBeta = lnGamma(a) + lnGamma(b2) - lnGamma(a + b2);
+    var front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b2 - lnBeta);
+    if (x < (a + 1) / (a + b2 + 2)) {
+      return front * betaCF(x, a, b2) / a;
+    } else {
+      return 1 - front * betaCF(1 - x, b2, a) / b2;
+    }
+  }
+
+  function betaCF(x, a, b2) {
+    var maxIter = 200, eps = 1e-14;
+    var am = 1, bm = 1, az = 1;
+    var qab = a + b2, qap = a + 1, qam = a - 1;
+    var bz = 1 - qab * x / qap;
+    for (var m = 1; m <= maxIter; m++) {
+      var em = m;
+      var tem = em + em;
+      var d2 = em * (b2 - em) * x / ((qam + tem) * (a + tem));
+      az = az + d2 * am;
+      bz = bz + d2 * bm;
+      d2 = -(a + em) * (qab + em) * x / ((a + tem) * (qap + tem));
+      am = az + d2 * am; // Not standard Lentz but simple approach
+      bm = bz + d2 * bm;
+      // Actually use Lentz's method properly:
+      // Restarting with proper continued fraction
+      if (Math.abs(bz) > 1e-30) {
+        var aold = az / bz;
+        am /= bz; bm /= bz; az /= bz; bz = 1;
+        if (Math.abs(aold - az) < eps * Math.abs(az)) return az;
+      }
+    }
+    return az;
+  }
+
+  function lnGamma(x) {
+    // Lanczos approximation
+    var g = 7;
+    var c = [
+      0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+      771.32342877765313, -176.61502916214059, 12.507343278686905,
+      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+    ];
+    if (x < 0.5) {
+      return Math.log(Math.PI / Math.sin(Math.PI * x)) - lnGamma(1 - x);
+    }
+    x -= 1;
+    var aa = c[0];
+    var t = x + g + 0.5;
+    for (var i = 1; i < g + 2; i++) aa += c[i] / (x + i);
+    return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(aa);
+  }
+
+  // F-distribution CDF
+  function fCDF(x, d1, d2) {
+    if (x <= 0) return 0;
+    var v = d1 * x / (d1 * x + d2);
+    return regIncBeta(v, d1 / 2, d2 / 2);
+  }
+
+  // ============================
+  // APP STATE
+  // ============================
+  var STATE = {
+    studies: [],          // [{name, yi, se, mods: {modName: val, ...}}, ...]
+    moderators: [],       // [{name, type: 'continuous'|'categorical'}, ...]
+    lastModel: null,      // Regression result
+    validated: false
+  };
+
+  var STORAGE_KEY = 'metaRegWorkbench_v1';
+
+  // ============================
+  // DARK MODE
+  // ============================
+  (function initDarkMode() {
+    var saved = localStorage.getItem(STORAGE_KEY + '_dark');
+    if (saved === 'true') document.body.classList.add('dark-mode');
+  })();
+
+  document.getElementById('btnDarkMode').addEventListener('click', function() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem(STORAGE_KEY + '_dark', document.body.classList.contains('dark-mode'));
+  });
+
+  // ============================
+  // TAB SWITCHING
+  // ============================
+  var tabs = document.querySelectorAll('[role="tab"]');
+  var panels = document.querySelectorAll('[role="tabpanel"]');
+
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      tab.setAttribute('aria-selected', 'true');
+      document.getElementById(tab.getAttribute('aria-controls')).classList.add('active');
+    });
+
+    tab.addEventListener('keydown', function(e) {
+      var tabArr = Array.from(tabs);
+      var idx = tabArr.indexOf(tab);
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        tabArr[(idx + 1) % tabArr.length].click();
+        tabArr[(idx + 1) % tabArr.length].focus();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        tabArr[(idx - 1 + tabArr.length) % tabArr.length].click();
+        tabArr[(idx - 1 + tabArr.length) % tabArr.length].focus();
+      }
+    });
+  });
+
+  // ============================
+  // MODERATOR CONFIGURATION
+  // ============================
+  function renderModeratorConfig() {
+    var n = parseInt(document.getElementById('numModerators').value, 10);
+    if (!isFinite(n) || n < 1) n = 1;
+    if (n > 5) n = 5;
+    var html = '<div class="data-grid" style="grid-template-columns: 200px 150px; max-width: 400px;">';
+    html += '<div class="data-grid-header">Moderator Name</div>';
+    html += '<div class="data-grid-header">Type</div>';
+    for (var i = 0; i < n; i++) {
+      var prevName = STATE.moderators[i] ? STATE.moderators[i].name : ('Mod' + (i + 1));
+      var prevType = STATE.moderators[i] ? STATE.moderators[i].type : 'continuous';
+      html += '<input type="text" id="modName' + i + '" value="' + escapeHtml(prevName) + '" placeholder="Moderator name">';
+      html += '<select id="modType' + i + '"><option value="continuous"' + (prevType === 'continuous' ? ' selected' : '') + '>Continuous</option>';
+      html += '<option value="categorical"' + (prevType === 'categorical' ? ' selected' : '') + '>Categorical</option></select>';
+    }
+    html += '</div>';
+    document.getElementById('moderatorConfig').innerHTML = html;
+  }
+
+  function readModeratorConfig() {
+    var n = parseInt(document.getElementById('numModerators').value, 10);
+    if (!isFinite(n) || n < 1) n = 1;
+    if (n > 5) n = 5;
+    var mods = [];
+    for (var i = 0; i < n; i++) {
+      var nameEl = document.getElementById('modName' + i);
+      var typeEl = document.getElementById('modType' + i);
+      mods.push({
+        name: nameEl ? nameEl.value.trim() || ('Mod' + (i + 1)) : ('Mod' + (i + 1)),
+        type: typeEl ? typeEl.value : 'continuous'
+      });
+    }
+    STATE.moderators = mods;
+    return mods;
+  }
+
+  document.getElementById('btnSetModerators').addEventListener('click', function() {
+    readModeratorConfig();
+    renderDataGrid();
+    notify('Moderator configuration updated', 'success');
+  });
+
+  renderModeratorConfig();
+
+  // ============================
+  // DATA GRID
+  // ============================
+  function renderDataGrid() {
+    var mods = STATE.moderators;
+    var nCols = 3 + mods.length; // study, yi, se, mod1, ...
+    var colTemplate = '180px 100px 100px ' + mods.map(function() { return '120px'; }).join(' ') + ' 40px';
+    var html = '<div class="data-grid" style="grid-template-columns:' + colTemplate + ';">';
+    html += '<div class="data-grid-header">Study</div>';
+    html += '<div class="data-grid-header">yi (effect)</div>';
+    html += '<div class="data-grid-header">SE</div>';
+    mods.forEach(function(m) {
+      html += '<div class="data-grid-header">' + escapeHtml(m.name) + '</div>';
+    });
+    html += '<div class="data-grid-header"></div>';
+
+    var nRows = Math.max(STATE.studies.length, 3);
+    for (var i = 0; i < nRows; i++) {
+      var s = STATE.studies[i] || {};
+      html += '<input type="text" class="dg-study" data-row="' + i + '" value="' + escapeHtml(s.name || '') + '" placeholder="Study ' + (i + 1) + '">';
+      html += '<input type="text" class="dg-yi" data-row="' + i + '" value="' + (s.yi != null ? s.yi : '') + '" placeholder="0.00">';
+      html += '<input type="text" class="dg-se" data-row="' + i + '" value="' + (s.se != null ? s.se : '') + '" placeholder="0.00">';
+      mods.forEach(function(m, mi) {
+        var v = (s.mods && s.mods[m.name] != null) ? s.mods[m.name] : '';
+        html += '<input type="text" class="dg-mod" data-row="' + i + '" data-mod="' + mi + '" value="' + escapeHtml(String(v)) + '">';
+      });
+      html += '<button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem;" data-remove="' + i + '" title="Remove row">X</button>';
+    }
+    html += '</div>';
+    html += '<button class="btn btn-secondary mt-1" id="btnAddRow" style="font-size:0.82rem;">+ Add Row</button>';
+    document.getElementById('dataGridContainer').innerHTML = html;
+
+    // Add row
+    document.getElementById('btnAddRow').addEventListener('click', function() {
+      readGridIntoState();
+      STATE.studies.push({ name: '', yi: null, se: null, mods: {} });
+      renderDataGrid();
+    });
+
+    // Remove row
+    document.querySelectorAll('[data-remove]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        readGridIntoState();
+        var idx = parseInt(btn.getAttribute('data-remove'), 10);
+        STATE.studies.splice(idx, 1);
+        renderDataGrid();
+      });
+    });
+  }
+
+  function readGridIntoState() {
+    var rows = document.querySelectorAll('.dg-study');
+    var mods = STATE.moderators;
+    var studies = [];
+    rows.forEach(function(el) {
+      var r = parseInt(el.getAttribute('data-row'), 10);
+      var name = el.value.trim();
+      var yiEl = document.querySelector('.dg-yi[data-row="' + r + '"]');
+      var seEl = document.querySelector('.dg-se[data-row="' + r + '"]');
+      var yi = yiEl ? parseFloat(yiEl.value) : NaN;
+      var se = seEl ? parseFloat(seEl.value) : NaN;
+      var modVals = {};
+      mods.forEach(function(m, mi) {
+        var modEl = document.querySelector('.dg-mod[data-row="' + r + '"][data-mod="' + mi + '"]');
+        if (modEl) {
+          var v = modEl.value.trim();
+          if (m.type === 'continuous') {
+            var pv = parseFloat(v);
+            modVals[m.name] = isFinite(pv) ? pv : null;
+          } else {
+            modVals[m.name] = v || null;
+          }
+        }
+      });
+      studies.push({
+        name: name,
+        yi: isFinite(yi) ? yi : null,
+        se: isFinite(se) ? se : null,
+        mods: modVals
+      });
+    });
+    STATE.studies = studies;
+  }
+
+  // ============================
+  // EXAMPLE DATA
+  // ============================
+  var BCG_DATA = [
+    { name: 'Aronson 1948', yi: -0.8893, se: 0.4073, mods: { latitude: 44 } },
+    { name: 'Ferguson 1949', yi: -1.5854, se: 0.5715, mods: { latitude: 55 } },
+    { name: 'Rosenthal 1960', yi: -1.3481, se: 0.3421, mods: { latitude: 42 } },
+    { name: 'Hart 1977', yi: -1.4415, se: 0.2154, mods: { latitude: 52 } },
+    { name: 'Frimodt 1973', yi: -0.0173, se: 0.1098, mods: { latitude: 13 } },
+    { name: 'Stein 1953', yi: -0.4717, se: 0.5414, mods: { latitude: 27 } },
+    { name: 'Vandiviere 1973', yi: -0.0193, se: 0.2272, mods: { latitude: 19 } },
+    { name: 'TPT Madras 1980', yi: 0.0115, se: 0.0635, mods: { latitude: 13 } },
+    { name: 'Coetzee 1968', yi: -0.4674, se: 0.2229, mods: { latitude: 27 } },
+    { name: 'Rosenthal 1961', yi: -1.6209, se: 0.7061, mods: { latitude: 42 } },
+    { name: 'Comstock 1974', yi: -0.3394, se: 0.2278, mods: { latitude: 18 } },
+    { name: 'Comstock 1969', yi: -0.0169, se: 0.2297, mods: { latitude: 33 } },
+    { name: 'Comstock(b) 1974', yi: 0.4467, se: 0.2902, mods: { latitude: 33 } }
+  ];
+
+  var EXERCISE_DATA = [
+    { name: 'Blumenthal 1999', yi: -0.56, se: 0.22, mods: { dose: 135, delivery: 'group', duration: 16 } },
+    { name: 'Dunn 2005', yi: -0.32, se: 0.18, mods: { dose: 180, delivery: 'individual', duration: 24 } },
+    { name: 'Mather 2002', yi: -0.24, se: 0.25, mods: { dose: 120, delivery: 'group', duration: 12 } },
+    { name: 'Singh 2005', yi: -0.80, se: 0.30, mods: { dose: 240, delivery: 'individual', duration: 8 } },
+    { name: 'Babyak 2000', yi: -0.48, se: 0.20, mods: { dose: 135, delivery: 'group', duration: 16 } },
+    { name: 'McNeil 1991', yi: -0.15, se: 0.28, mods: { dose: 90, delivery: 'group', duration: 6 } },
+    { name: 'Martinsen 1985', yi: -0.71, se: 0.26, mods: { dose: 180, delivery: 'group', duration: 9 } },
+    { name: 'Craft 2004', yi: -0.42, se: 0.21, mods: { dose: 150, delivery: 'individual', duration: 12 } },
+    { name: 'Doyne 1987', yi: -0.90, se: 0.34, mods: { dose: 150, delivery: 'group', duration: 8 } },
+    { name: 'Lawlor 2001', yi: -0.38, se: 0.19, mods: { dose: 120, delivery: 'group', duration: 10 } },
+    { name: 'Stathopoulou 2006', yi: -0.52, se: 0.23, mods: { dose: 150, delivery: 'individual', duration: 12 } },
+    { name: 'Knubben 2007', yi: -0.63, se: 0.27, mods: { dose: 210, delivery: 'individual', duration: 2 } },
+    { name: 'Trivedi 2011', yi: -0.29, se: 0.16, mods: { dose: 240, delivery: 'individual', duration: 12 } },
+    { name: 'Krogh 2009', yi: -0.19, se: 0.24, mods: { dose: 135, delivery: 'group', duration: 16 } },
+    { name: 'Schuch 2016', yi: -0.67, se: 0.15, mods: { dose: 180, delivery: 'group', duration: 12 } }
+  ];
+
+  document.getElementById('btnLoadBCG').addEventListener('click', function() {
+    STATE.moderators = [{ name: 'latitude', type: 'continuous' }];
+    STATE.studies = JSON.parse(JSON.stringify(BCG_DATA));
+    document.getElementById('numModerators').value = '1';
+    renderModeratorConfig();
+    renderDataGrid();
+    STATE.validated = false;
+    notify('BCG Vaccine example loaded (13 studies)', 'success');
+  });
+
+  document.getElementById('btnLoadExercise').addEventListener('click', function() {
+    STATE.moderators = [
+      { name: 'dose', type: 'continuous' },
+      { name: 'delivery', type: 'categorical' },
+      { name: 'duration', type: 'continuous' }
+    ];
+    STATE.studies = JSON.parse(JSON.stringify(EXERCISE_DATA));
+    document.getElementById('numModerators').value = '3';
+    renderModeratorConfig();
+    renderDataGrid();
+    STATE.validated = false;
+    notify('Exercise/Depression example loaded (15 studies)', 'success');
+  });
+
+  document.getElementById('btnClearData').addEventListener('click', function() {
+    STATE.studies = [];
+    STATE.lastModel = null;
+    STATE.validated = false;
+    renderDataGrid();
+    document.getElementById('dataSummaryCard').style.display = 'none';
+    notify('Data cleared', 'info');
+  });
+
+  // ============================
+  // CSV PARSING
+  // ============================
+  document.getElementById('btnParseCSV').addEventListener('click', function() {
+    var text = document.getElementById('csvPaste').value.trim();
+    if (!text) { notify('No CSV data to parse', 'error'); return; }
+    var lines = text.split(/\r?\n/).filter(function(l) { return l.trim(); });
+    if (lines.length < 2) { notify('Need at least header + 1 data row', 'error'); return; }
+
+    var header = parseCSVLine(lines[0]);
+    // Expect: study, yi, se, mod1, mod2, ...
+    if (header.length < 3) { notify('Header must have at least study, yi, se columns', 'error'); return; }
+
+    // Setup moderators from extra columns
+    var mods = [];
+    for (var c = 3; c < header.length; c++) {
+      mods.push({ name: header[c].trim(), type: 'continuous' }); // auto-detect later
+    }
+
+    var studies = [];
+    for (var r = 1; r < lines.length; r++) {
+      var cols = parseCSVLine(lines[r]);
+      if (cols.length < 3) continue;
+      var modVals = {};
+      for (var m = 0; m < mods.length; m++) {
+        var v = cols[3 + m] !== undefined ? cols[3 + m].trim() : '';
+        var pv = parseFloat(v);
+        modVals[mods[m].name] = isFinite(pv) ? pv : v;
+      }
+      studies.push({
+        name: cols[0].trim(),
+        yi: parseFloat(cols[1]),
+        se: parseFloat(cols[2]),
+        mods: modVals
+      });
+    }
+
+    // Auto-detect categorical: if any non-numeric values
+    mods.forEach(function(m) {
+      var hasCat = studies.some(function(s) {
+        var v = s.mods[m.name];
+        return typeof v === 'string' && v !== '' && !isFinite(parseFloat(v));
+      });
+      if (hasCat) m.type = 'categorical';
+    });
+
+    STATE.moderators = mods;
+    STATE.studies = studies;
+    document.getElementById('numModerators').value = String(mods.length || 1);
+    renderModeratorConfig();
+    renderDataGrid();
+    STATE.validated = false;
+    notify('Parsed ' + studies.length + ' studies from CSV', 'success');
+  });
+
+  function parseCSVLine(line) {
+    var result = [];
+    var current = '';
+    var inQuotes = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { result.push(current); current = ''; }
+        else { current += ch; }
+      }
+    }
+    result.push(current);
+    return result;
+  }
+
+  // ============================
+  // VALIDATE DATA
+  // ============================
+  document.getElementById('btnValidateData').addEventListener('click', function() {
+    readGridIntoState();
+    readModeratorConfig();
+
+    // Filter out empty rows
+    STATE.studies = STATE.studies.filter(function(s) {
+      return s.name && s.yi != null && s.se != null;
+    });
+
+    if (STATE.studies.length < 3) {
+      notify('Need at least 3 studies with valid data', 'error');
+      document.getElementById('dataStatus').textContent = 'Validation failed: need 3+ studies';
+      return;
+    }
+
+    // Check SE > 0
+    var badSE = STATE.studies.some(function(s) { return s.se <= 0; });
+    if (badSE) {
+      notify('All SE values must be > 0', 'error');
+      document.getElementById('dataStatus').textContent = 'Validation failed: SE must be > 0';
+      return;
+    }
+
+    // Check moderator completeness
+    var incomplete = false;
+    STATE.moderators.forEach(function(m) {
+      STATE.studies.forEach(function(s) {
+        if (s.mods[m.name] == null || s.mods[m.name] === '') {
+          incomplete = true;
+        }
+      });
+    });
+
+    if (incomplete) {
+      notify('Some moderator values are missing', 'error');
+      document.getElementById('dataStatus').textContent = 'Validation failed: missing moderator values';
+      return;
+    }
+
+    STATE.validated = true;
+    document.getElementById('dataStatus').textContent = STATE.studies.length + ' studies validated';
+    notify(STATE.studies.length + ' studies validated successfully', 'success');
+
+    // Show summary
+    showDataSummary();
+
+    // Populate regression tab
+    populateRegressionTab();
+    populateVizTab();
+  });
+
+  function showDataSummary() {
+    var n = STATE.studies.length;
+    var yis = STATE.studies.map(function(s) { return s.yi; });
+    var ses = STATE.studies.map(function(s) { return s.se; });
+    var meanY = yis.reduce(function(a, b) { return a + b; }, 0) / n;
+    var minY = Math.min.apply(null, yis);
+    var maxY = Math.max.apply(null, yis);
+
+    var html = '<table><tr><th>Statistic</th><th>Value</th></tr>';
+    html += '<tr><td>Number of studies</td><td>' + n + '</td></tr>';
+    html += '<tr><td>Mean effect (yi)</td><td>' + fmt(meanY) + '</td></tr>';
+    html += '<tr><td>Range of effects</td><td>' + fmt(minY) + ' to ' + fmt(maxY) + '</td></tr>';
+    html += '<tr><td>Mean SE</td><td>' + fmt(ses.reduce(function(a, b) { return a + b; }, 0) / n) + '</td></tr>';
+    html += '<tr><td>Moderators</td><td>' + STATE.moderators.map(function(m) { return escapeHtml(m.name) + ' (' + m.type + ')'; }).join(', ') + '</td></tr>';
+    html += '</table>';
+
+    document.getElementById('dataSummary').innerHTML = html;
+    document.getElementById('dataSummaryCard').style.display = 'block';
+  }
+
+  // ============================
+  // POPULATE REGRESSION TAB
+  // ============================
+  function populateRegressionTab() {
+    var html = '';
+    STATE.moderators.forEach(function(m, i) {
+      html += '<label><input type="checkbox" class="mod-check" data-mod="' + i + '" checked> ' + escapeHtml(m.name) + ' (' + m.type + ')</label>';
+    });
+    document.getElementById('modCheckboxes').innerHTML = html;
+  }
+
+  function populateVizTab() {
+    var sel = document.getElementById('vizModerator');
+    sel.innerHTML = '';
+    STATE.moderators.forEach(function(m, i) {
+      var opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = m.name + ' (' + m.type + ')';
+      sel.appendChild(opt);
+    });
+  }
+
+  // ============================
+  // META-REGRESSION CORE ENGINE
+  // ============================
+
+  /**
+   * Build design matrix X for selected moderators.
+   * Categorical variables => dummy coding (reference = first level).
+   * Returns { X: matrix, colNames: string[], catLevels: {modName: string[]} }
+   */
+  function buildDesignMatrix(studies, moderators) {
+    var n = studies.length;
+    var colNames = ['intercept'];
+    var catLevels = {};
+
+    // Determine columns
+    moderators.forEach(function(m) {
+      if (m.type === 'continuous') {
+        colNames.push(m.name);
+      } else {
+        // Get unique levels
+        var levels = [];
+        studies.forEach(function(s) {
+          var v = String(s.mods[m.name]);
+          if (levels.indexOf(v) === -1) levels.push(v);
+        });
+        levels.sort();
+        catLevels[m.name] = levels;
+        // Dummy coding: skip first level (reference)
+        for (var l = 1; l < levels.length; l++) {
+          colNames.push(m.name + ':' + levels[l]);
+        }
+      }
+    });
+
+    var p = colNames.length;
+    var X = matCreate(n, p);
+
+    for (var i = 0; i < n; i++) {
+      X[i][0] = 1; // intercept
+      var col = 1;
+      moderators.forEach(function(m) {
+        if (m.type === 'continuous') {
+          X[i][col] = studies[i].mods[m.name];
+          col++;
+        } else {
+          var levels = catLevels[m.name];
+          var val = String(studies[i].mods[m.name]);
+          for (var l = 1; l < levels.length; l++) {
+            X[i][col] = (val === levels[l]) ? 1 : 0;
+            col++;
+          }
+        }
+      });
+    }
+
+    return { X: X, colNames: colNames, catLevels: catLevels };
+  }
+
+  /**
+   * DerSimonian-Laird tau^2 (base, no moderators)
+   */
+  function dlTau2(yi, vi) {
+    var k = yi.length;
+    var w = vi.map(function(v) { return 1 / v; });
+    var sumW = w.reduce(function(a, b) { return a + b; }, 0);
+    var meanW = w.reduce(function(a, b, i) { return a + w[i] * yi[i]; }, 0) / sumW;
+    var Q = 0;
+    for (var i = 0; i < k; i++) Q += w[i] * Math.pow(yi[i] - meanW, 2);
+    var c = sumW - w.reduce(function(a, b) { return a + b * b; }, 0) / sumW;
+    var tau2 = Math.max(0, (Q - (k - 1)) / c);
+    return { tau2: tau2, Q: Q };
+  }
+
+  /**
+   * Mixed-effects meta-regression.
+   * Method of moments (DL-style) for tau^2_res.
+   */
+  function fitMetaRegression(studies, selectedMods, useKH) {
+    var n = studies.length;
+    var yi = studies.map(function(s) { return s.yi; });
+    var vi = studies.map(function(s) { return s.se * s.se; });
+    var Y = yi.map(function(y) { return [y]; }); // column vector
+
+    // Build design matrix
+    var dm = buildDesignMatrix(studies, selectedMods);
+    var X = dm.X;
+    var colNames = dm.colNames;
+    var catLevels = dm.catLevels;
+    var p = colNames.length; // includes intercept
+
+    // Base tau^2 (no moderators)
+    var base = dlTau2(yi, vi);
+    var tau2base = base.tau2;
+
+    // Iterative method-of-moments for tau^2_res
+    var tau2res = tau2base;
+    for (var iter = 0; iter < 50; iter++) {
+      // Weight matrix
+      var wArr = vi.map(function(v) { return 1 / (v + tau2res); });
+      var W = matDiag(wArr);
+
+      // beta = (X'WX)^{-1} X'Wy
+      var Xt = matTranspose(X);
+      var XtW = matMul(Xt, W);
+      var XtWX = matMul(XtW, X);
+      var XtWXinv = matInverse(XtWX);
+      if (!XtWXinv) {
+        return { error: 'Singular matrix: design matrix is not full rank.' };
+      }
+      var XtWY = matMul(XtW, Y);
+      var beta = matMul(XtWXinv, XtWY);
+
+      // Residuals: e = y - X*beta
+      var Xbeta = matMul(X, beta);
+      var resid = [];
+      for (var i = 0; i < n; i++) resid.push(yi[i] - Xbeta[i][0]);
+
+      // Q_E = sum(w * e^2)
+      var QE = 0;
+      for (var i2 = 0; i2 < n; i2++) QE += wArr[i2] * resid[i2] * resid[i2];
+
+      // Update tau^2_res via method of moments
+      // trace(W - W X (X'WX)^{-1} X' W) = c
+      var P = matMul(matMul(matMul(W, X), XtWXinv), matMul(Xt, W));
+      var trW = wArr.reduce(function(a, b) { return a + b; }, 0);
+      var trP = 0;
+      for (var j = 0; j < n; j++) trP += P[j][j];
+      var c = trW - trP;
+
+      var tau2new = Math.max(0, (QE - (n - p)) / c);
+
+      if (Math.abs(tau2new - tau2res) < 1e-8) {
+        tau2res = tau2new;
+        break;
+      }
+      tau2res = tau2new;
+    }
+
+    // Final estimates with converged tau^2_res
+    var wFinal = vi.map(function(v) { return 1 / (v + tau2res); });
+    var WFinal = matDiag(wFinal);
+    var Xt2 = matTranspose(X);
+    var XtW2 = matMul(Xt2, WFinal);
+    var XtWX2 = matMul(XtW2, X);
+    var XtWXinv2 = matInverse(XtWX2);
+    if (!XtWXinv2) {
+      return { error: 'Singular matrix in final estimation.' };
+    }
+    var XtWY2 = matMul(XtW2, Y);
+    var betaFinal = matMul(XtWXinv2, XtWY2);
+
+    // Residuals
+    var Xbeta2 = matMul(X, betaFinal);
+    var residFinal = [];
+    for (var i3 = 0; i3 < n; i3++) residFinal.push(yi[i3] - Xbeta2[i3][0]);
+
+    // QE (residual heterogeneity)
+    var QEfinal = 0;
+    for (var i4 = 0; i4 < n; i4++) QEfinal += wFinal[i4] * residFinal[i4] * residFinal[i4];
+
+    // QM (test of moderators): Wald test
+    // beta_mod = beta without intercept, Var_mod = corresponding submatrix
+    var betaMod = [];
+    for (var j2 = 1; j2 < p; j2++) betaMod.push([betaFinal[j2][0]]);
+    var VarMod = matCreate(p - 1, p - 1);
+    for (var r = 0; r < p - 1; r++)
+      for (var c2 = 0; c2 < p - 1; c2++)
+        VarMod[r][c2] = XtWXinv2[r + 1][c2 + 1];
+
+    var VarModInv = matInverse(VarMod);
+    var QM = 0;
+    if (VarModInv && betaMod.length > 0) {
+      var tmp = matMul(matTranspose(betaMod), VarModInv);
+      var QMarr = matMul(tmp, betaMod);
+      QM = QMarr[0][0];
+    }
+
+    // Knapp-Hartung adjustment
+    var seFactor = 1;
+    var dfResid = n - p;
+    if (useKH && dfResid > 0) {
+      seFactor = Math.sqrt(QEfinal / dfResid);
+    }
+
+    // Coefficient SEs and p-values
+    var coeffs = [];
+    for (var j3 = 0; j3 < p; j3++) {
+      var se = Math.sqrt(XtWXinv2[j3][j3]) * seFactor;
+      var est = betaFinal[j3][0];
+      var z, pVal;
+      if (useKH) {
+        z = est / se;
+        pVal = 2 * (1 - tCDF(Math.abs(z), dfResid));
+      } else {
+        z = est / se;
+        pVal = 2 * (1 - normalCDF(Math.abs(z)));
+      }
+      coeffs.push({
+        name: colNames[j3],
+        estimate: est,
+        se: se,
+        ci_lo: est - (useKH ? tQuantile(0.975, dfResid) : 1.96) * se,
+        ci_hi: est + (useKH ? tQuantile(0.975, dfResid) : 1.96) * se,
+        zval: z,
+        pval: pVal
+      });
+    }
+
+    // R-squared analog
+    var R2 = tau2base > 0 ? Math.max(0, (tau2base - tau2res) / tau2base) : 0;
+
+    // I^2_res
+    var typicalV = n / wFinal.reduce(function(a, b) { return a + b; }, 0);
+    var I2res = tau2res > 0 ? tau2res / (tau2res + typicalV) * 100 : 0;
+
+    // p-values for QM and QE
+    var QM_df = p - 1;
+    var QE_df = n - p;
+    var pQM = QM_df > 0 ? (1 - chiSqCDF(QM, QM_df)) : 1;
+    var pQE = QE_df > 0 ? (1 - chiSqCDF(QEfinal, QE_df)) : 1;
+
+    if (useKH && QM_df > 0 && QE_df > 0) {
+      // Use F-test for QM under KH
+      var Fstat = QM / QM_df;
+      pQM = 1 - fCDF(Fstat, QM_df, QE_df);
+    }
+
+    // AIC and BIC
+    // log-likelihood approximation: sum(log(w_i) - w_i * e_i^2) / 2 (up to constant)
+    var ll = 0;
+    for (var i5 = 0; i5 < n; i5++) {
+      var wt = 1 / (vi[i5] + tau2res);
+      ll += -0.5 * (Math.log(2 * Math.PI) - Math.log(wt) + wt * residFinal[i5] * residFinal[i5]);
+    }
+    var nParams = p + 1; // coefficients + tau^2
+    var AIC = -2 * ll + 2 * nParams;
+    var BIC = -2 * ll + Math.log(n) * nParams;
+
+    // Hat matrix: H = X (X'WX)^{-1} X' W
+    var H = matMul(matMul(matMul(X, XtWXinv2), Xt2), WFinal);
+    var hatValues = [];
+    for (var i6 = 0; i6 < n; i6++) hatValues.push(H[i6][i6]);
+
+    // Studentized residuals
+    var studResid = [];
+    for (var i7 = 0; i7 < n; i7++) {
+      var sigmaI = (vi[i7] + tau2res) * (1 - hatValues[i7]);
+      studResid.push(sigmaI > 0 ? residFinal[i7] / Math.sqrt(sigmaI) : 0);
+    }
+
+    // Fitted values
+    var fitted = [];
+    for (var i8 = 0; i8 < n; i8++) fitted.push(Xbeta2[i8][0]);
+
+    // Cook's distance
+    var cooksD = [];
+    for (var i9 = 0; i9 < n; i9++) {
+      var h = hatValues[i9];
+      var e = studResid[i9];
+      cooksD.push((e * e * h) / (p * (1 - h)));
+    }
+
+    return {
+      coeffs: coeffs,
+      colNames: colNames,
+      catLevels: catLevels,
+      tau2base: tau2base,
+      tau2res: tau2res,
+      R2: R2,
+      I2res: I2res,
+      QM: QM,
+      QM_df: QM_df,
+      pQM: pQM,
+      QE: QEfinal,
+      QE_df: QE_df,
+      pQE: pQE,
+      AIC: AIC,
+      BIC: BIC,
+      ll: ll,
+      residuals: residFinal,
+      studResiduals: studResid,
+      fitted: fitted,
+      hatValues: hatValues,
+      cooksD: cooksD,
+      weights: wFinal,
+      selectedMods: selectedMods,
+      n: n,
+      p: p,
+      knappHartung: useKH,
+      X: X,
+      XtWXinv: XtWXinv2
+    };
+  }
+
+  // ============================
+  // PERMUTATION TEST
+  // ============================
+  function runPermutationTest(studies, selectedMods, useKH, seed, nPerm) {
+    nPerm = nPerm || 1000;
+    var rng = xoshiro128ss(seed);
+
+    // Observed QM
+    var obsResult = fitMetaRegression(studies, selectedMods, useKH);
+    if (obsResult.error) return { error: obsResult.error };
+    var QM_obs = obsResult.QM;
+
+    // Permute moderator values
+    var count = 0;
+    for (var b = 0; b < nPerm; b++) {
+      // Create permuted studies: shuffle moderator values independently
+      var permStudies = studies.map(function(s) {
+        return { name: s.name, yi: s.yi, se: s.se, mods: Object.assign({}, s.mods) };
+      });
+
+      // Fisher-Yates shuffle of moderator rows
+      var indices = [];
+      for (var i = 0; i < studies.length; i++) indices.push(i);
+      for (var i2 = indices.length - 1; i2 > 0; i2--) {
+        var j = Math.floor(rng() * (i2 + 1));
+        var tmp = indices[i2]; indices[i2] = indices[j]; indices[j] = tmp;
+      }
+      for (var i3 = 0; i3 < permStudies.length; i3++) {
+        permStudies[i3].mods = Object.assign({}, studies[indices[i3]].mods);
+      }
+
+      var permResult = fitMetaRegression(permStudies, selectedMods, useKH);
+      if (!permResult.error && permResult.QM >= QM_obs) count++;
+    }
+
+    var pPerm = (1 + count) / (1 + nPerm);
+    return { pPerm: pPerm, QM_obs: QM_obs, nPerm: nPerm };
+  }
+
+  // ============================
+  // RUN REGRESSION
+  // ============================
+  document.getElementById('btnRunRegression').addEventListener('click', function() {
+    if (!STATE.validated) {
+      notify('Please validate data first (Tab 1)', 'error');
+      return;
+    }
+
+    // Read selected moderators
+    var checks = document.querySelectorAll('.mod-check');
+    var selectedMods = [];
+    checks.forEach(function(cb) {
+      if (cb.checked) {
+        var idx = parseInt(cb.getAttribute('data-mod'), 10);
+        selectedMods.push(STATE.moderators[idx]);
+      }
+    });
+
+    if (selectedMods.length === 0) {
+      notify('Select at least one moderator', 'error');
+      return;
+    }
+
+    var useKH = document.getElementById('chkKnappHartung').checked;
+    var result = fitMetaRegression(STATE.studies, selectedMods, useKH);
+
+    if (result.error) {
+      notify(result.error, 'error');
+      document.getElementById('modelSummary').innerHTML = '<p style="color:var(--danger);">' + escapeHtml(result.error) + '</p>';
+      return;
+    }
+
+    STATE.lastModel = result;
+
+    // Render model summary
+    renderModelSummary(result);
+    renderCoeffTable(result);
+    renderFitStats(result);
+
+    // Permutation test if requested
+    var doPermutation = document.getElementById('chkPermutation').checked;
+    if (doPermutation) {
+      var seed = parseInt(document.getElementById('permSeed').value, 10) || 42;
+      notify('Running permutation test (1000 iterations)...', 'info');
+      setTimeout(function() {
+        var permResult = runPermutationTest(STATE.studies, selectedMods, useKH, seed, 1000);
+        renderPermResults(permResult);
+      }, 50);
+    } else {
+      document.getElementById('permResultsCard').style.display = 'none';
+    }
+
+    // Update report
+    generateReport(result);
+
+    notify('Meta-regression completed', 'success');
+  });
+
+  // ============================
+  // RENDER RESULTS
+  // ============================
+  function renderModelSummary(r) {
+    var html = '<table>';
+    html += '<tr><td><strong>Model</strong></td><td>Mixed-effects meta-regression' + (r.knappHartung ? ' (Knapp-Hartung)' : '') + '</td></tr>';
+    html += '<tr><td><strong>Studies (k)</strong></td><td>' + r.n + '</td></tr>';
+    html += '<tr><td><strong>Moderators</strong></td><td>' + r.selectedMods.map(function(m) { return escapeHtml(m.name); }).join(', ') + '</td></tr>';
+    html += '<tr><td><strong>Parameters (p)</strong></td><td>' + r.p + ' (including intercept)</td></tr>';
+    html += '<tr><td><strong>tau2 (base)</strong></td><td>' + fmt(r.tau2base) + '</td></tr>';
+    html += '<tr><td><strong>tau2 (residual)</strong></td><td>' + fmt(r.tau2res) + '</td></tr>';
+    html += '<tr><td><strong>R-squared</strong></td><td>' + fmt(r.R2 * 100, 1) + '%</td></tr>';
+    html += '<tr><td><strong>I2 (residual)</strong></td><td>' + fmt(r.I2res, 1) + '%</td></tr>';
+    html += '</table>';
+    document.getElementById('modelSummary').innerHTML = html;
+  }
+
+  function renderCoeffTable(r) {
+    var distLabel = r.knappHartung ? 'tval' : 'zval';
+    var html = '<table>';
+    html += '<tr><th>Coefficient</th><th>Estimate</th><th>SE</th><th>95% CI</th><th>' + distLabel + '</th><th>p-value</th><th>Sig</th></tr>';
+    r.coeffs.forEach(function(c) {
+      var sig = c.pval < 0.001 ? '***' : c.pval < 0.01 ? '**' : c.pval < 0.05 ? '*' : '';
+      var sigClass = c.pval < 0.05 ? 'badge badge-success' : 'badge badge-info';
+      html += '<tr><td><strong>' + escapeHtml(c.name) + '</strong></td>';
+      html += '<td>' + fmt(c.estimate) + '</td>';
+      html += '<td>' + fmt(c.se) + '</td>';
+      html += '<td>[' + fmt(c.ci_lo) + ', ' + fmt(c.ci_hi) + ']</td>';
+      html += '<td>' + fmt(c.zval) + '</td>';
+      html += '<td>' + fmtP(c.pval) + '</td>';
+      html += '<td><span class="' + sigClass + '">' + (sig || 'ns') + '</span></td></tr>';
+    });
+    html += '</table>';
+    document.getElementById('coeffTableWrap').innerHTML = html;
+    document.getElementById('coeffTableCard').style.display = 'block';
+  }
+
+  function renderFitStats(r) {
+    var html = '<table>';
+    html += '<tr><th>Statistic</th><th>Value</th><th>df</th><th>p-value</th></tr>';
+    html += '<tr><td>QM (test of moderators)</td><td>' + fmt(r.QM, 2) + '</td><td>' + r.QM_df + '</td><td>' + fmtP(r.pQM) + '</td></tr>';
+    html += '<tr><td>QE (residual heterogeneity)</td><td>' + fmt(r.QE, 2) + '</td><td>' + r.QE_df + '</td><td>' + fmtP(r.pQE) + '</td></tr>';
+    html += '<tr><td>tau2 (residual)</td><td>' + fmt(r.tau2res) + '</td><td colspan="2"></td></tr>';
+    html += '<tr><td>I2 (residual)</td><td>' + fmt(r.I2res, 1) + '%</td><td colspan="2"></td></tr>';
+    html += '<tr><td>R-squared</td><td>' + fmt(r.R2 * 100, 1) + '%</td><td colspan="2"></td></tr>';
+    html += '<tr><td>AIC</td><td>' + fmt(r.AIC, 2) + '</td><td colspan="2"></td></tr>';
+    html += '<tr><td>BIC</td><td>' + fmt(r.BIC, 2) + '</td><td colspan="2"></td></tr>';
+    html += '<tr><td>Log-likelihood</td><td>' + fmt(r.ll, 2) + '</td><td colspan="2"></td></tr>';
+    html += '</table>';
+    document.getElementById('fitStats').innerHTML = html;
+    document.getElementById('fitStatsCard').style.display = 'block';
+  }
+
+  function renderPermResults(pr) {
+    if (pr.error) {
+      document.getElementById('permResults').innerHTML = '<p style="color:var(--danger);">' + escapeHtml(pr.error) + '</p>';
+      document.getElementById('permResultsCard').style.display = 'block';
+      return;
+    }
+    var sig = pr.pPerm < 0.05;
+    var html = '<table>';
+    html += '<tr><th>Statistic</th><th>Value</th></tr>';
+    html += '<tr><td>Observed QM</td><td>' + fmt(pr.QM_obs, 2) + '</td></tr>';
+    html += '<tr><td>Permutations</td><td>' + pr.nPerm + '</td></tr>';
+    html += '<tr><td>Permutation p-value</td><td><span class="badge ' + (sig ? 'badge-success' : 'badge-warning') + '">' + fmtP(pr.pPerm) + '</span></td></tr>';
+    html += '</table>';
+    html += '<p class="text-muted mt-1">Permutation p-value = (1 + #{QM* >= QM_obs}) / (1 + B), using seeded xoshiro128** PRNG for reproducibility.</p>';
+    document.getElementById('permResults').innerHTML = html;
+    document.getElementById('permResultsCard').style.display = 'block';
+    notify('Permutation test complete: p = ' + fmtP(pr.pPerm), sig ? 'success' : 'info');
+  }
+
+  // ============================
+  // VISUALIZATIONS (SVG)
+  // ============================
+  document.getElementById('btnGenerateViz').addEventListener('click', function() {
+    if (!STATE.lastModel) {
+      notify('Run a regression model first', 'error');
+      return;
+    }
+
+    var modIdx = parseInt(document.getElementById('vizModerator').value, 10);
+    var mod = STATE.moderators[modIdx];
+
+    if (mod.type === 'continuous') {
+      renderBubblePlot(mod);
+      document.getElementById('bubblePlotContainer').style.display = 'block';
+      document.getElementById('subgroupForestContainer').style.display = 'none';
+    } else {
+      renderSubgroupForest(mod);
+      document.getElementById('subgroupForestContainer').style.display = 'block';
+      document.getElementById('bubblePlotContainer').style.display = 'none';
+    }
+
+    renderResidualDiagnostics();
+    notify('Visualizations generated', 'success');
+  });
+
+  function renderBubblePlot(mod) {
+    var r = STATE.lastModel;
+    var studies = STATE.studies;
+    var n = studies.length;
+
+    // Get moderator values and effects
+    var xVals = studies.map(function(s) { return s.mods[mod.name]; });
+    var yVals = studies.map(function(s) { return s.yi; });
+    var weights = studies.map(function(s) { return 1 / (s.se * s.se); });
+
+    // Normalize weights for bubble size
+    var maxW = Math.max.apply(null, weights);
+    var minW = Math.min.apply(null, weights);
+    var normW = weights.map(function(w) {
+      return 5 + 25 * (w - minW) / (maxW - minW + 1e-10);
+    });
+
+    // SVG dimensions
+    var W = 700, H = 450;
+    var margin = { top: 30, right: 40, bottom: 60, left: 70 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    // Axis ranges
+    var xMin = Math.min.apply(null, xVals);
+    var xMax = Math.max.apply(null, xVals);
+    var yMin = Math.min.apply(null, yVals);
+    var yMax = Math.max.apply(null, yVals);
+    var xPad = (xMax - xMin) * 0.1 || 5;
+    var yPad = (yMax - yMin) * 0.1 || 0.5;
+    xMin -= xPad; xMax += xPad;
+    yMin -= yPad; yMax += yPad;
+
+    function sx(v) { return margin.left + (v - xMin) / (xMax - xMin) * plotW; }
+    function sy(v) { return margin.top + plotH - (v - yMin) / (yMax - yMin) * plotH; }
+
+    // Find the regression coefficient for this moderator
+    var interceptCoeff = r.coeffs[0].estimate;
+    var modCoeff = null;
+    for (var i = 0; i < r.coeffs.length; i++) {
+      if (r.coeffs[i].name === mod.name) {
+        modCoeff = r.coeffs[i];
+        break;
+      }
+    }
+
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:100%;">';
+
+    // Background
+    svg += '<rect width="' + W + '" height="' + H + '" fill="var(--bg-card)" rx="4"/>';
+
+    // Grid lines
+    var nTicksX = 6, nTicksY = 5;
+    var xStep = (xMax - xMin) / nTicksX;
+    var yStep = (yMax - yMin) / nTicksY;
+
+    for (var t = 0; t <= nTicksX; t++) {
+      var xv = xMin + t * xStep;
+      svg += '<line x1="' + sx(xv) + '" y1="' + margin.top + '" x2="' + sx(xv) + '" y2="' + (margin.top + plotH) + '" stroke="var(--border)" stroke-opacity="0.4" stroke-dasharray="3,3"/>';
+      svg += '<text x="' + sx(xv) + '" y="' + (margin.top + plotH + 20) + '" text-anchor="middle" font-size="11" fill="var(--text-muted)">' + fmt(xv, 1) + '</text>';
+    }
+    for (var t2 = 0; t2 <= nTicksY; t2++) {
+      var yv = yMin + t2 * yStep;
+      svg += '<line x1="' + margin.left + '" y1="' + sy(yv) + '" x2="' + (margin.left + plotW) + '" y2="' + sy(yv) + '" stroke="var(--border)" stroke-opacity="0.4" stroke-dasharray="3,3"/>';
+      svg += '<text x="' + (margin.left - 10) + '" y="' + (sy(yv) + 4) + '" text-anchor="end" font-size="11" fill="var(--text-muted)">' + fmt(yv, 2) + '</text>';
+    }
+
+    // Regression line + CI band
+    if (modCoeff) {
+      var nPts = 50;
+      var xRange = xMax - xMin;
+      var modSE = modCoeff.se;
+      var intSE = r.coeffs[0].se;
+
+      // Confidence band
+      var bandPoints = [];
+      var bandPointsRev = [];
+      for (var pi = 0; pi <= nPts; pi++) {
+        var xv2 = xMin + pi * xRange / nPts;
+        var yHat = interceptCoeff + modCoeff.estimate * xv2;
+        // SE of prediction: sqrt(Var(b0) + x^2*Var(b1) + 2*x*Cov(b0,b1))
+        // Approximate: use XtWXinv
+        var varPred = r.XtWXinv[0][0];
+        // Find the column index for this moderator
+        var modColIdx = r.colNames.indexOf(mod.name);
+        if (modColIdx >= 0) {
+          varPred = r.XtWXinv[0][0] + xv2 * xv2 * r.XtWXinv[modColIdx][modColIdx] + 2 * xv2 * r.XtWXinv[0][modColIdx];
+        }
+        var sePred = Math.sqrt(Math.max(0, varPred));
+        var ciW = 1.96 * sePred;
+        bandPoints.push(sx(xv2) + ',' + sy(yHat + ciW));
+        bandPointsRev.unshift(sx(xv2) + ',' + sy(yHat - ciW));
+      }
+      svg += '<polygon points="' + bandPoints.concat(bandPointsRev).join(' ') + '" fill="var(--primary)" fill-opacity="0.12" stroke="none"/>';
+
+      // Regression line
+      var lineY1 = interceptCoeff + modCoeff.estimate * xMin;
+      var lineY2 = interceptCoeff + modCoeff.estimate * xMax;
+      svg += '<line x1="' + sx(xMin) + '" y1="' + sy(lineY1) + '" x2="' + sx(xMax) + '" y2="' + sy(lineY2) + '" stroke="var(--primary)" stroke-width="2.5"/>';
+    }
+
+    // Bubbles
+    for (var i2 = 0; i2 < n; i2++) {
+      var cx = sx(xVals[i2]);
+      var cy = sy(yVals[i2]);
+      var rad = normW[i2];
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + fmt(rad, 1) + '" fill="var(--primary)" fill-opacity="0.35" stroke="var(--primary)" stroke-width="1.5">';
+      svg += '<title>' + escapeHtml(studies[i2].name) + '\nyi=' + fmt(yVals[i2]) + '\n' + escapeHtml(mod.name) + '=' + fmt(xVals[i2], 1) + '</title>';
+      svg += '</circle>';
+    }
+
+    // Axes
+    svg += '<line x1="' + margin.left + '" y1="' + (margin.top + plotH) + '" x2="' + (margin.left + plotW) + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+
+    // Labels
+    svg += '<text x="' + (margin.left + plotW / 2) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">' + escapeHtml(mod.name) + '</text>';
+    svg += '<text x="15" y="' + (margin.top + plotH / 2) + '" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)" transform="rotate(-90 15 ' + (margin.top + plotH / 2) + ')">Effect Size (yi)</text>';
+
+    svg += '</svg>';
+    document.getElementById('bubblePlot').innerHTML = svg;
+  }
+
+  function renderSubgroupForest(mod) {
+    var studies = STATE.studies;
+    var r = STATE.lastModel;
+
+    // Group studies by categorical level
+    var groups = {};
+    studies.forEach(function(s) {
+      var lev = String(s.mods[mod.name]);
+      if (!groups[lev]) groups[lev] = [];
+      groups[lev].push(s);
+    });
+
+    var levelNames = Object.keys(groups).sort();
+
+    // Pool within each subgroup (random-effects)
+    var subResults = [];
+    levelNames.forEach(function(lev) {
+      var g = groups[lev];
+      var yi = g.map(function(s) { return s.yi; });
+      var vi = g.map(function(s) { return s.se * s.se; });
+      var base = dlTau2(yi, vi);
+      var tau2 = base.tau2;
+      var w = vi.map(function(v) { return 1 / (v + tau2); });
+      var sumW = w.reduce(function(a, b) { return a + b; }, 0);
+      var pooled = w.reduce(function(a, b, i) { return a + b * yi[i]; }, 0) / sumW;
+      var sePo = Math.sqrt(1 / sumW);
+      subResults.push({
+        level: lev,
+        k: g.length,
+        estimate: pooled,
+        se: sePo,
+        ci_lo: pooled - 1.96 * sePo,
+        ci_hi: pooled + 1.96 * sePo,
+        tau2: tau2
+      });
+    });
+
+    // Between-subgroup Q-test
+    var allYi = studies.map(function(s) { return s.yi; });
+    var allVi = studies.map(function(s) { return s.se * s.se; });
+    var baseAll = dlTau2(allYi, allVi);
+    var QTotal = baseAll.Q;
+    var QW = 0;
+    levelNames.forEach(function(lev) {
+      var g = groups[lev];
+      var yi = g.map(function(s) { return s.yi; });
+      var vi = g.map(function(s) { return s.se * s.se; });
+      var w = vi.map(function(v) { return 1 / v; });
+      var sumW = w.reduce(function(a, b) { return a + b; }, 0);
+      var meanW = w.reduce(function(a, b, i) { return a + b * yi[i]; }, 0) / sumW;
+      for (var i = 0; i < yi.length; i++) QW += w[i] * Math.pow(yi[i] - meanW, 2);
+    });
+    var QB = QTotal - QW;
+    var dfB = levelNames.length - 1;
+    var pQB = dfB > 0 ? (1 - chiSqCDF(QB, dfB)) : 1;
+
+    // Render forest-like SVG
+    var rowH = 35;
+    var W = 700;
+    var nRows = subResults.length + 1; // +1 for Q-between
+    var H = 80 + nRows * rowH;
+    var margin = { top: 40, right: 40, bottom: 40, left: 250 };
+    var plotW = W - margin.left - margin.right;
+
+    // Axis range
+    var allEsts = subResults.map(function(s) { return s.ci_lo; }).concat(subResults.map(function(s) { return s.ci_hi; }));
+    var xMin = Math.min.apply(null, allEsts);
+    var xMax = Math.max.apply(null, allEsts);
+    var xPad = (xMax - xMin) * 0.15 || 0.5;
+    xMin -= xPad; xMax += xPad;
+
+    function sx(v) { return margin.left + (v - xMin) / (xMax - xMin) * plotW; }
+
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:100%;">';
+    svg += '<rect width="' + W + '" height="' + H + '" fill="var(--bg-card)" rx="4"/>';
+
+    // Zero line
+    if (xMin <= 0 && xMax >= 0) {
+      svg += '<line x1="' + sx(0) + '" y1="' + margin.top + '" x2="' + sx(0) + '" y2="' + (margin.top + nRows * rowH) + '" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,4"/>';
+    }
+
+    subResults.forEach(function(sr, i) {
+      var y = margin.top + i * rowH + rowH / 2;
+      // Label
+      svg += '<text x="' + (margin.left - 10) + '" y="' + (y + 4) + '" text-anchor="end" font-size="12" fill="var(--text)">' + escapeHtml(sr.level) + ' (k=' + sr.k + ')</text>';
+      // CI line
+      svg += '<line x1="' + sx(sr.ci_lo) + '" y1="' + y + '" x2="' + sx(sr.ci_hi) + '" y2="' + y + '" stroke="var(--primary)" stroke-width="2"/>';
+      // Diamond for estimate
+      var cx = sx(sr.estimate);
+      var dw = 6, dh = 8;
+      svg += '<polygon points="' + (cx - dw) + ',' + y + ' ' + cx + ',' + (y - dh) + ' ' + (cx + dw) + ',' + y + ' ' + cx + ',' + (y + dh) + '" fill="var(--primary)"/>';
+      // Estimate text
+      svg += '<text x="' + (sx(sr.ci_hi) + 8) + '" y="' + (y + 4) + '" font-size="11" fill="var(--text-muted)">' + fmt(sr.estimate, 2) + ' [' + fmt(sr.ci_lo, 2) + ', ' + fmt(sr.ci_hi, 2) + ']</text>';
+    });
+
+    // Q-between row
+    var lastY = margin.top + subResults.length * rowH + rowH / 2;
+    svg += '<line x1="' + margin.left + '" y1="' + (lastY - rowH / 2 + 2) + '" x2="' + (W - margin.right) + '" y2="' + (lastY - rowH / 2 + 2) + '" stroke="var(--border)" stroke-width="1"/>';
+    svg += '<text x="' + (margin.left - 10) + '" y="' + (lastY + 4) + '" text-anchor="end" font-size="12" font-weight="700" fill="var(--text)">Q-between</text>';
+    svg += '<text x="' + (margin.left + 10) + '" y="' + (lastY + 4) + '" font-size="12" fill="var(--text)">QB=' + fmt(QB, 2) + ', df=' + dfB + ', p=' + fmtP(pQB) + '</text>';
+
+    // Title
+    svg += '<text x="' + (W / 2) + '" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-heading)">Subgroup Analysis by ' + escapeHtml(mod.name) + '</text>';
+
+    svg += '</svg>';
+    document.getElementById('subgroupForest').innerHTML = svg;
+  }
+
+  function renderResidualDiagnostics() {
+    var r = STATE.lastModel;
+    if (!r) return;
+
+    renderResidVsFitted(r);
+    renderQQPlot(r);
+    renderCooksPlot(r);
+    renderHatPlot(r);
+  }
+
+  function renderResidVsFitted(r) {
+    var W = 400, H = 320;
+    var margin = { top: 20, right: 20, bottom: 50, left: 60 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    var xVals = r.fitted;
+    var yVals = r.studResiduals;
+    var xMin = Math.min.apply(null, xVals) - 0.1;
+    var xMax = Math.max.apply(null, xVals) + 0.1;
+    var yAbs = Math.max.apply(null, yVals.map(Math.abs));
+    var yMin = -(yAbs + 0.5);
+    var yMax = yAbs + 0.5;
+
+    function sx(v) { return margin.left + (v - xMin) / (xMax - xMin) * plotW; }
+    function sy(v) { return margin.top + plotH - (v - yMin) / (yMax - yMin) * plotH; }
+
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:100%;">';
+    svg += '<rect width="' + W + '" height="' + H + '" fill="var(--bg-card)" rx="4"/>';
+
+    // Zero line
+    svg += '<line x1="' + margin.left + '" y1="' + sy(0) + '" x2="' + (margin.left + plotW) + '" y2="' + sy(0) + '" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,4"/>';
+
+    // Points
+    for (var i = 0; i < r.n; i++) {
+      svg += '<circle cx="' + sx(xVals[i]) + '" cy="' + sy(yVals[i]) + '" r="4" fill="var(--primary)" fill-opacity="0.6" stroke="var(--primary)" stroke-width="1">';
+      svg += '<title>' + escapeHtml(STATE.studies[i].name) + '</title></circle>';
+    }
+
+    // Axes
+    svg += '<line x1="' + margin.left + '" y1="' + (margin.top + plotH) + '" x2="' + (margin.left + plotW) + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<text x="' + (margin.left + plotW / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="var(--text)">Fitted Values</text>';
+    svg += '<text x="12" y="' + (margin.top + plotH / 2) + '" text-anchor="middle" font-size="11" fill="var(--text)" transform="rotate(-90 12 ' + (margin.top + plotH / 2) + ')">Studentized Residuals</text>';
+
+    svg += '</svg>';
+    document.getElementById('residFittedPlot').innerHTML = svg;
+    document.getElementById('residFittedContainer').style.display = 'block';
+  }
+
+  function renderQQPlot(r) {
+    var W = 400, H = 320;
+    var margin = { top: 20, right: 20, bottom: 50, left: 60 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    // Sort residuals
+    var sorted = r.studResiduals.slice().sort(function(a, b) { return a - b; });
+    var n = sorted.length;
+    var theoretical = [];
+    for (var i = 0; i < n; i++) {
+      theoretical.push(normalQuantile((i + 0.5) / n));
+    }
+
+    var allVals = sorted.concat(theoretical);
+    var vMin = Math.min.apply(null, allVals) - 0.3;
+    var vMax = Math.max.apply(null, allVals) + 0.3;
+
+    function sx(v) { return margin.left + (v - vMin) / (vMax - vMin) * plotW; }
+    function sy(v) { return margin.top + plotH - (v - vMin) / (vMax - vMin) * plotH; }
+
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:100%;">';
+    svg += '<rect width="' + W + '" height="' + H + '" fill="var(--bg-card)" rx="4"/>';
+
+    // Reference line
+    svg += '<line x1="' + sx(vMin) + '" y1="' + sy(vMin) + '" x2="' + sx(vMax) + '" y2="' + sy(vMax) + '" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="4,4"/>';
+
+    // Points
+    for (var i2 = 0; i2 < n; i2++) {
+      svg += '<circle cx="' + sx(theoretical[i2]) + '" cy="' + sy(sorted[i2]) + '" r="4" fill="var(--primary)" fill-opacity="0.6" stroke="var(--primary)" stroke-width="1"/>';
+    }
+
+    // Axes
+    svg += '<line x1="' + margin.left + '" y1="' + (margin.top + plotH) + '" x2="' + (margin.left + plotW) + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<text x="' + (margin.left + plotW / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="var(--text)">Theoretical Quantiles</text>';
+    svg += '<text x="12" y="' + (margin.top + plotH / 2) + '" text-anchor="middle" font-size="11" fill="var(--text)" transform="rotate(-90 12 ' + (margin.top + plotH / 2) + ')">Sample Quantiles</text>';
+
+    svg += '</svg>';
+    document.getElementById('qqPlot').innerHTML = svg;
+    document.getElementById('qqPlotContainer').style.display = 'block';
+  }
+
+  function renderCooksPlot(r) {
+    var W = 400, H = 320;
+    var margin = { top: 20, right: 20, bottom: 70, left: 60 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    var maxD = Math.max.apply(null, r.cooksD) * 1.2 || 1;
+    var barW = Math.max(8, plotW / r.n - 4);
+
+    function sx(i) { return margin.left + (i + 0.5) * plotW / r.n; }
+    function sy(v) { return margin.top + plotH - v / maxD * plotH; }
+
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:100%;">';
+    svg += '<rect width="' + W + '" height="' + H + '" fill="var(--bg-card)" rx="4"/>';
+
+    // Threshold line at 4/n
+    var thresh = 4 / r.n;
+    if (thresh < maxD) {
+      svg += '<line x1="' + margin.left + '" y1="' + sy(thresh) + '" x2="' + (margin.left + plotW) + '" y2="' + sy(thresh) + '" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,4"/>';
+      svg += '<text x="' + (margin.left + plotW + 5) + '" y="' + (sy(thresh) + 4) + '" font-size="10" fill="var(--danger)">4/n</text>';
+    }
+
+    for (var i = 0; i < r.n; i++) {
+      var color = r.cooksD[i] > thresh ? 'var(--danger)' : 'var(--primary)';
+      svg += '<rect x="' + (sx(i) - barW / 2) + '" y="' + sy(r.cooksD[i]) + '" width="' + barW + '" height="' + (sy(0) - sy(r.cooksD[i])) + '" fill="' + color + '" fill-opacity="0.7">';
+      svg += '<title>' + escapeHtml(STATE.studies[i].name) + ': ' + fmt(r.cooksD[i]) + '</title></rect>';
+      // Label
+      svg += '<text x="' + sx(i) + '" y="' + (margin.top + plotH + 14) + '" text-anchor="end" font-size="9" fill="var(--text-muted)" transform="rotate(-45 ' + sx(i) + ' ' + (margin.top + plotH + 14) + ')">' + escapeHtml(STATE.studies[i].name.substring(0, 12)) + '</text>';
+    }
+
+    // Axes
+    svg += '<line x1="' + margin.left + '" y1="' + (margin.top + plotH) + '" x2="' + (margin.left + plotW) + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+
+    svg += '</svg>';
+    document.getElementById('cooksPlot').innerHTML = svg;
+    document.getElementById('cooksContainer').style.display = 'block';
+  }
+
+  function renderHatPlot(r) {
+    var W = 400, H = 320;
+    var margin = { top: 20, right: 20, bottom: 70, left: 60 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    var maxH = Math.max.apply(null, r.hatValues) * 1.3 || 1;
+    var barW = Math.max(8, plotW / r.n - 4);
+
+    function sx(i) { return margin.left + (i + 0.5) * plotW / r.n; }
+    function sy(v) { return margin.top + plotH - v / maxH * plotH; }
+
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:100%;">';
+    svg += '<rect width="' + W + '" height="' + H + '" fill="var(--bg-card)" rx="4"/>';
+
+    // Threshold line at 2*p/n
+    var thresh = 2 * r.p / r.n;
+    if (thresh < maxH) {
+      svg += '<line x1="' + margin.left + '" y1="' + sy(thresh) + '" x2="' + (margin.left + plotW) + '" y2="' + sy(thresh) + '" stroke="var(--danger)" stroke-width="1" stroke-dasharray="4,4"/>';
+      svg += '<text x="' + (margin.left + plotW + 5) + '" y="' + (sy(thresh) + 4) + '" font-size="10" fill="var(--danger)">2p/n</text>';
+    }
+
+    for (var i = 0; i < r.n; i++) {
+      var color = r.hatValues[i] > thresh ? 'var(--warning)' : 'var(--success)';
+      svg += '<rect x="' + (sx(i) - barW / 2) + '" y="' + sy(r.hatValues[i]) + '" width="' + barW + '" height="' + (sy(0) - sy(r.hatValues[i])) + '" fill="' + color + '" fill-opacity="0.7">';
+      svg += '<title>' + escapeHtml(STATE.studies[i].name) + ': ' + fmt(r.hatValues[i]) + '</title></rect>';
+      svg += '<text x="' + sx(i) + '" y="' + (margin.top + plotH + 14) + '" text-anchor="end" font-size="9" fill="var(--text-muted)" transform="rotate(-45 ' + sx(i) + ' ' + (margin.top + plotH + 14) + ')">' + escapeHtml(STATE.studies[i].name.substring(0, 12)) + '</text>';
+    }
+
+    // Axes
+    svg += '<line x1="' + margin.left + '" y1="' + (margin.top + plotH) + '" x2="' + (margin.left + plotW) + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+    svg += '<line x1="' + margin.left + '" y1="' + margin.top + '" x2="' + margin.left + '" y2="' + (margin.top + plotH) + '" stroke="var(--text)" stroke-width="1"/>';
+
+    svg += '</svg>';
+    document.getElementById('hatPlot').innerHTML = svg;
+    document.getElementById('hatContainer').style.display = 'block';
+  }
+
+  // ============================
+  // MODEL COMPARISON
+  // ============================
+  document.getElementById('btnRunComparison').addEventListener('click', function() {
+    if (!STATE.validated) {
+      notify('Please validate data first (Tab 1)', 'error');
+      return;
+    }
+    if (STATE.moderators.length === 0) {
+      notify('No moderators configured', 'error');
+      return;
+    }
+
+    var useKH = document.getElementById('chkKnappHartung').checked;
+    var results = [];
+
+    // Intercept-only (null model)
+    var nullResult = fitMetaRegression(STATE.studies, [], false);
+    // We cannot run with 0 moderators easily, so compute base tau2 directly
+    var yi = STATE.studies.map(function(s) { return s.yi; });
+    var vi = STATE.studies.map(function(s) { return s.se * s.se; });
+    var base = dlTau2(yi, vi);
+
+    // Single-moderator models
+    STATE.moderators.forEach(function(mod) {
+      var r = fitMetaRegression(STATE.studies, [mod], useKH);
+      if (!r.error) {
+        results.push({
+          name: mod.name,
+          type: 'Single: ' + mod.name,
+          tau2res: r.tau2res,
+          I2res: r.I2res,
+          R2: r.R2,
+          QM: r.QM,
+          pQM: r.pQM,
+          AIC: r.AIC,
+          BIC: r.BIC
+        });
+      }
+    });
+
+    // Full model (all moderators)
+    if (STATE.moderators.length > 1) {
+      var rFull = fitMetaRegression(STATE.studies, STATE.moderators, useKH);
+      if (!rFull.error) {
+        results.push({
+          name: 'Full model',
+          type: 'Full (all moderators)',
+          tau2res: rFull.tau2res,
+          I2res: rFull.I2res,
+          R2: rFull.R2,
+          QM: rFull.QM,
+          pQM: rFull.pQM,
+          AIC: rFull.AIC,
+          BIC: rFull.BIC
+        });
+      }
+    }
+
+    if (results.length === 0) {
+      notify('No models could be fitted', 'error');
+      return;
+    }
+
+    // Find best by AIC
+    var bestAIC = Infinity;
+    var bestIdx = 0;
+    results.forEach(function(r, i) {
+      if (r.AIC < bestAIC) { bestAIC = r.AIC; bestIdx = i; }
+    });
+
+    // Render table
+    var html = '<table>';
+    html += '<tr><th>Model</th><th>tau2_res</th><th>I2_res</th><th>R2 (%)</th><th>QM</th><th>p(QM)</th><th>AIC</th><th>BIC</th><th>Best?</th></tr>';
+    results.forEach(function(r, i) {
+      var cls = i === bestIdx ? ' class="highlight-row"' : '';
+      html += '<tr' + cls + '>';
+      html += '<td>' + escapeHtml(r.type) + '</td>';
+      html += '<td>' + fmt(r.tau2res) + '</td>';
+      html += '<td>' + fmt(r.I2res, 1) + '%</td>';
+      html += '<td>' + fmt(r.R2 * 100, 1) + '</td>';
+      html += '<td>' + fmt(r.QM, 2) + '</td>';
+      html += '<td>' + fmtP(r.pQM) + '</td>';
+      html += '<td>' + fmt(r.AIC, 2) + '</td>';
+      html += '<td>' + fmt(r.BIC, 2) + '</td>';
+      html += '<td>' + (i === bestIdx ? '<span class="badge badge-success">Best (AIC)</span>' : '') + '</td>';
+      html += '</tr>';
+    });
+    html += '</table>';
+    document.getElementById('comparisonTable').innerHTML = html;
+
+    // Multi-model inference
+    renderMultiModelInference(results, bestIdx);
+
+    notify('Model comparison complete', 'success');
+  });
+
+  function renderMultiModelInference(results, bestIdx) {
+    // Compute AIC weights
+    var minAIC = results[bestIdx].AIC;
+    var deltaAIC = results.map(function(r) { return r.AIC - minAIC; });
+    var expDelta = deltaAIC.map(function(d) { return Math.exp(-0.5 * d); });
+    var sumExp = expDelta.reduce(function(a, b) { return a + b; }, 0);
+    var aicWeights = expDelta.map(function(e) { return e / sumExp; });
+
+    var html = '<table>';
+    html += '<tr><th>Model</th><th>Delta AIC</th><th>AIC Weight</th><th>Evidence Ratio</th></tr>';
+    results.forEach(function(r, i) {
+      var er = aicWeights[bestIdx] / (aicWeights[i] + 1e-20);
+      var cls = i === bestIdx ? ' class="highlight-row"' : '';
+      html += '<tr' + cls + '>';
+      html += '<td>' + escapeHtml(r.type) + '</td>';
+      html += '<td>' + fmt(deltaAIC[i], 2) + '</td>';
+      html += '<td>' + fmt(aicWeights[i], 4) + '</td>';
+      html += '<td>' + (i === bestIdx ? '1.00' : fmt(er, 2)) + '</td>';
+      html += '</tr>';
+    });
+    html += '</table>';
+    document.getElementById('multiModelInference').innerHTML = html;
+    document.getElementById('multiModelCard').style.display = 'block';
+  }
+
+  // ============================
+  // REPORT GENERATION
+  // ============================
+  function generateReport(r) {
+    // Methods text
+    var modNames = r.selectedMods.map(function(m) { return m.name; }).join(', ');
+    var methodHtml = '<p>Mixed-effects meta-regression was conducted to examine the association between study-level moderators (' +
+      escapeHtml(modNames) + ') and effect sizes. The model included ' + r.n + ' studies with ' +
+      (r.p - 1) + ' predictor(s) (plus intercept).</p>';
+
+    methodHtml += '<p>Residual heterogeneity (tau-squared) was estimated using the method of moments estimator ' +
+      '(DerSimonian &amp; Laird, 1986). The test of moderators was conducted using the Wald-type omnibus test (QM). ';
+    if (r.knappHartung) {
+      methodHtml += 'The Knapp-Hartung adjustment was applied, using a t-distribution with ' + r.QE_df +
+        ' degrees of freedom for inference (Knapp &amp; Hartung, 2003). ';
+    }
+    methodHtml += 'The proportion of heterogeneity explained by the moderator(s) was quantified using the R-squared analog ' +
+      '(R2 = max(0, (tau2_base - tau2_res) / tau2_base); Thompson &amp; Higgins, 2002).</p>';
+
+    methodHtml += '<p>The model explained ' + fmt(r.R2 * 100, 1) + '% of the between-study heterogeneity ' +
+      '(tau2_res = ' + fmt(r.tau2res) + '; I2_res = ' + fmt(r.I2res, 1) + '%). ' +
+      'The test of moderators was ' + (r.pQM < 0.05 ? '' : 'not ') + 'significant (QM = ' + fmt(r.QM, 2) +
+      ', df = ' + r.QM_df + ', p = ' + fmtP(r.pQM) + ').</p>';
+
+    methodHtml += '<p><strong>References:</strong> Thompson SG, Higgins JPT. How should meta-regression analyses be undertaken and interpreted? <em>Statistics in Medicine</em> 2002;21:1559-1573. ' +
+      'Viechtbauer W. Conducting meta-analyses in R with the metafor package. <em>Journal of Statistical Software</em> 2010;36(3):1-48. ' +
+      'Higgins JPT, Thompson SG. Controlling the risk of spurious findings from meta-regression. <em>Statistics in Medicine</em> 2004;23:1663-1682.</p>';
+
+    document.getElementById('methodsText').innerHTML = methodHtml;
+
+    // R code
+    var rCode = '# Meta-regression analysis using metafor\nlibrary(metafor)\n\n';
+    rCode += '# Data\ndat <- data.frame(\n';
+    rCode += '  study = c(' + STATE.studies.map(function(s) { return '"' + s.name.replace(/"/g, '\\"') + '"'; }).join(', ') + '),\n';
+    rCode += '  yi = c(' + STATE.studies.map(function(s) { return s.yi; }).join(', ') + '),\n';
+    rCode += '  sei = c(' + STATE.studies.map(function(s) { return s.se; }).join(', ') + ')';
+    r.selectedMods.forEach(function(m) {
+      rCode += ',\n  ' + m.name + ' = c(' + STATE.studies.map(function(s) {
+        var v = s.mods[m.name];
+        return m.type === 'categorical' ? ('"' + v + '"') : v;
+      }).join(', ') + ')';
+    });
+    rCode += '\n)\n\n';
+
+    var modsFormula = '~ ' + r.selectedMods.map(function(m) { return m.name; }).join(' + ');
+    rCode += '# Fit mixed-effects meta-regression\n';
+    rCode += 'res <- rma(yi = yi, sei = sei, mods = ' + modsFormula + ',\n';
+    rCode += '           data = dat, method = "DL"';
+    if (r.knappHartung) rCode += ', test = "knha"';
+    rCode += ')\n\n';
+    rCode += '# Print results\nsummary(res)\n\n';
+    rCode += '# Bubble plot (for continuous moderator)\n';
+    rCode += '# regplot(res, xlab = "' + (r.selectedMods[0] ? r.selectedMods[0].name : 'Moderator') + '", ylab = "Effect Size")\n';
+
+    document.getElementById('rCode').textContent = rCode;
+  }
+
+  // ============================
+  // EXPORT
+  // ============================
+  document.getElementById('btnExportCSV').addEventListener('click', function() {
+    if (!STATE.validated || STATE.studies.length === 0) {
+      notify('No data to export', 'error');
+      return;
+    }
+    var header = ['study', 'yi', 'se'];
+    STATE.moderators.forEach(function(m) { header.push(m.name); });
+    if (STATE.lastModel) {
+      header.push('fitted', 'residual', 'studResidual', 'hatValue', 'cooksD');
+    }
+    var lines = [header.join(',')];
+    STATE.studies.forEach(function(s, i) {
+      var row = ['"' + s.name.replace(/"/g, '""') + '"', s.yi, s.se];
+      STATE.moderators.forEach(function(m) {
+        var v = s.mods[m.name];
+        if (typeof v === 'string') row.push('"' + v + '"');
+        else row.push(v);
+      });
+      if (STATE.lastModel) {
+        row.push(fmt(STATE.lastModel.fitted[i], 6));
+        row.push(fmt(STATE.lastModel.residuals[i], 6));
+        row.push(fmt(STATE.lastModel.studResiduals[i], 6));
+        row.push(fmt(STATE.lastModel.hatValues[i], 6));
+        row.push(fmt(STATE.lastModel.cooksD[i], 6));
+      }
+      lines.push(row.join(','));
+    });
+    downloadFile(lines.join('\n'), 'meta-regression-data.csv', 'text/csv');
+    notify('CSV exported', 'success');
+  });
+
+  document.getElementById('btnExportJSON').addEventListener('click', function() {
+    var exportObj = {
+      studies: STATE.studies,
+      moderators: STATE.moderators,
+      model: STATE.lastModel ? {
+        coeffs: STATE.lastModel.coeffs,
+        tau2base: STATE.lastModel.tau2base,
+        tau2res: STATE.lastModel.tau2res,
+        R2: STATE.lastModel.R2,
+        I2res: STATE.lastModel.I2res,
+        QM: STATE.lastModel.QM,
+        pQM: STATE.lastModel.pQM,
+        QE: STATE.lastModel.QE,
+        pQE: STATE.lastModel.pQE,
+        AIC: STATE.lastModel.AIC,
+        BIC: STATE.lastModel.BIC,
+        knappHartung: STATE.lastModel.knappHartung
+      } : null
+    };
+    downloadFile(JSON.stringify(exportObj, null, 2), 'meta-regression-results.json', 'application/json');
+    notify('JSON exported', 'success');
+  });
+
+  document.getElementById('btnPrint').addEventListener('click', function() {
+    window.print();
+  });
+
+  function downloadFile(content, filename, mimeType) {
+    var blob = new Blob([content], { type: mimeType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ============================
+  // SAVE / LOAD STATE
+  // ============================
+  document.getElementById('btnSaveState').addEventListener('click', function() {
+    readGridIntoState();
+    readModeratorConfig();
+    var toSave = {
+      studies: STATE.studies,
+      moderators: STATE.moderators,
+      validated: STATE.validated
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    notify('Session saved to localStorage', 'success');
+  });
+
+  document.getElementById('btnLoadState').addEventListener('click', function() {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) { notify('No saved session found', 'error'); return; }
+    try {
+      var data = JSON.parse(saved);
+      STATE.studies = data.studies || [];
+      STATE.moderators = data.moderators || [];
+      STATE.validated = data.validated || false;
+      document.getElementById('numModerators').value = String(STATE.moderators.length || 1);
+      renderModeratorConfig();
+      renderDataGrid();
+      if (STATE.validated) {
+        showDataSummary();
+        populateRegressionTab();
+        populateVizTab();
+      }
+      notify('Session loaded', 'success');
+    } catch (e) {
+      notify('Failed to load session: ' + e.message, 'error');
+    }
+  });
+
+  // ============================
+  // INITIAL RENDER
+  // ============================
+  renderDataGrid();
+
+})();
+</script>
+
+</body>
+</html>
