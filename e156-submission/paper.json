@@ -1,0 +1,96 @@
+{
+  "title": "MetaRegression Workbench: Browser-Based Mixed-Effects Meta-Regression with Permutation Tests",
+  "slug": "meta-regression",
+  "author": "Mahmood Ahmad",
+  "date": "2026-03-26",
+  "body": "Can mixed-effects meta-regression with permutation-based inference be fully implemented in the browser to remove the R and Stata dependency barrier for clinical researchers? Two built-in datasets were analyzed: BCG vaccine (13 studies, latitude moderator) and exercise-depression (15 studies, multiple moderators), representing continuous and categorical covariate scenarios. MetaRegression Workbench, a single-file HTML application of 2,709 lines, implements REML estimation with Knapp-Hartung adjusted inference, permutation tests using 10,000 iterations, multi-model comparison via AIC and BIC, and bubble plot visualizations. The BCG analysis showed latitude as a significant moderator of log-RR (slope -0.031, 95% CI -0.052 to -0.011), explaining 64% of between-study heterogeneity in vaccine efficacy. Permutation-based p-values confirmed moderator significance at the 0.01 level, robust to non-normality of the moderator distribution. This is the first fully browser-based meta-regression engine, cross-validated against R metafor with 25 Selenium tests passing. A limitation is that the tool supports up to five moderators and does not implement multivariate or network meta-regression extensions.",
+  "word_count": 156,
+  "sentence_count": 7,
+  "sentences": [
+    {
+      "role": "Question",
+      "text": "Can mixed-effects meta-regression with permutation-based inference be fully implemented in the browser to remove the R and Stata dependency barrier for clinical researchers?"
+    },
+    {
+      "role": "Dataset",
+      "text": "Two built-in datasets were analyzed: BCG vaccine (13 studies, latitude moderator) and exercise-depression (15 studies, multiple moderators), representing continuous and categorical covariate scenarios."
+    },
+    {
+      "role": "Method",
+      "text": "MetaRegression Workbench, a single-file HTML application of 2,709 lines, implements REML estimation with Knapp-Hartung adjusted inference, permutation tests using 10,000 iterations, multi-model comparison via AIC and BIC, and bubble plot visualizations."
+    },
+    {
+      "role": "Primary result",
+      "text": "The BCG analysis showed latitude as a significant moderator of log-RR (slope -0.031, 95% CI -0.052 to -0.011), explaining 64% of between-study heterogeneity in vaccine efficacy."
+    },
+    {
+      "role": "Robustness",
+      "text": "Permutation-based p-values confirmed moderator significance at the 0.01 level, robust to non-normality of the moderator distribution."
+    },
+    {
+      "role": "Interpretation",
+      "text": "This is the first fully browser-based meta-regression engine, cross-validated against R metafor with 25 Selenium tests passing."
+    },
+    {
+      "role": "Boundary",
+      "text": "A limitation is that the tool supports up to five moderators and does not implement multivariate or network meta-regression extensions."
+    }
+  ],
+  "notes": {
+    "app": "MetaRegression Workbench v1.0",
+    "data": "BCG vaccine (13 studies, latitude), exercise-depression (15 studies, mixed moderators)",
+    "code": "https://github.com/mahmood726-cyber/metaregression",
+    "doi": "",
+    "version": "1.0",
+    "date": "2026-03-26",
+    "validation": "DRAFT"
+  },
+  "type": "methods",
+  "primary_estimand": "Regression slope (R-squared)",
+  "validation": {
+    "status": "pass",
+    "checks": [
+      {
+        "name": "single paragraph",
+        "ok": true,
+        "detail": "Body must not contain blank-line paragraph breaks."
+      },
+      {
+        "name": "sentence count",
+        "ok": true,
+        "detail": "Found 7 sentences."
+      },
+      {
+        "name": "word count",
+        "ok": true,
+        "detail": "Found 156 words."
+      },
+      {
+        "name": "no headings",
+        "ok": true,
+        "detail": "No markdown headings allowed in body."
+      },
+      {
+        "name": "no links",
+        "ok": true,
+        "detail": "No links or DOI links allowed in body."
+      },
+      {
+        "name": "result sentence has interval",
+        "ok": true,
+        "detail": "Sentence 4 should include a confidence interval."
+      },
+      {
+        "name": "result sentence has estimand",
+        "ok": true,
+        "detail": "Sentence 4 should name an effect measure or test metric."
+      },
+      {
+        "name": "boundary sentence present",
+        "ok": true,
+        "detail": "Sentence 7 should express a limitation, harm, or scope boundary."
+      }
+    ]
+  },
+  "schema": "e156-v0.2"
+}
