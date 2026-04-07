@@ -1,6 +1,6 @@
 Mahmood Ahmad
 Tahir Heart Institute
-author@example.com
+mahmood.ahmad2@nhs.net
 
 MetaRegression Workbench: Browser-Based Mixed-Effects Meta-Regression with Permutation Tests
 
