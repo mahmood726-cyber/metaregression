@@ -6,7 +6,12 @@ Tests core calculations (via injected harness), UI interactions,
 example data loading, regression workflow, report generation, exports.
 """
 import sys, io, os, unittest, time, math, json
-if os.environ.get('PYTHONIOENCODING') is None and hasattr(sys.stdout, 'buffer'):
+
+# Only re-wrap stdout when this file is executed directly (python test_metaregression.py).
+# Under pytest, sys.stdout is already a capture fixture and wrapping its buffer
+# closes the underlying tempfile, breaking pytest's capture pipeline and
+# causing "ValueError: I/O operation on closed file." at session teardown.
+if __name__ == '__main__' and os.environ.get('PYTHONIOENCODING') is None and hasattr(sys.stdout, 'buffer'):
     try:
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     except Exception:
@@ -88,8 +93,10 @@ class TestMetaRegression(unittest.TestCase):
     def tearDownClass(cls):
         cls.drv.quit()
 
-    def js(self, script):
-        return self.drv.execute_script(script)
+    def js(self, script, *args):
+        # Forward *args so callers can pass values into JS via the standard
+        # Selenium `arguments[0..n]` pattern (e.g. pasting CSV text).
+        return self.drv.execute_script(script, *args)
 
     def reload_app(self):
         self.drv.get(HTML)
@@ -359,8 +366,8 @@ class TestMetaRegression(unittest.TestCase):
     def test_22_tab_switching(self):
         """Clicking each tab activates the corresponding panel"""
         self.reload_app()
-        tab_ids = ['tab-data', 'tab-regression', 'tab-viz', 'tab-comparison', 'tab-report']
-        panel_ids = ['panel-data', 'panel-regression', 'panel-viz', 'panel-comparison', 'panel-report']
+        tab_ids = ['tab-data', 'tab-regression', 'tab-viz', 'tab-compare', 'tab-report']
+        panel_ids = ['panel-data', 'panel-regression', 'panel-viz', 'panel-compare', 'panel-report']
         for tab_id, panel_id in zip(tab_ids, panel_ids):
             self.drv.find_element(By.ID, tab_id).click()
             time.sleep(0.2)
@@ -448,11 +455,11 @@ class TestMetaRegression(unittest.TestCase):
         time.sleep(0.5)
         self.drv.find_element(By.ID, 'btnValidateData').click()
         time.sleep(0.5)
-        self.drv.find_element(By.ID, 'tab-comparison').click()
+        self.drv.find_element(By.ID, 'tab-compare').click()
         time.sleep(0.3)
         self.drv.find_element(By.ID, 'btnRunComparison').click()
         time.sleep(3)
-        content = self.drv.find_element(By.ID, 'comparisonResults').text
+        content = self.drv.find_element(By.ID, 'comparisonTable').text
         self.assertTrue(len(content) > 0, "Comparison results should have content")
 
     # =================================================================

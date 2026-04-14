@@ -1019,6 +1019,10 @@ tr:hover td { background: var(--primary-light); }
     lastModel: null,      // Regression result
     validated: false
   };
+  // Expose for the Selenium test harness (tests/test_metaregression.py).
+  // Production app still references the IIFE-local `STATE`; this is a
+  // same-reference alias so state observed from tests matches runtime.
+  try { window.STATE = STATE; } catch (_) {}
 
   var STORAGE_KEY = 'metaRegWorkbench_v1';
 
