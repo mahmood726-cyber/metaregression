@@ -3,13 +3,21 @@ Meta-Regression Workbench — Selenium Test Suite (25 tests)
 Run: python test_meta_regression.py
 """
 import sys, os, time, io, unittest
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+# Only re-wrap stdout when this legacy script is executed directly.
+# Under pytest, rebinding the capture tempfile closes it and breaks teardown.
+if __name__ == '__main__' and os.environ.get('PYTHONIOENCODING') is None and hasattr(sys.stdout, 'buffer'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import WebDriverException
 
 HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'meta-regression.html')
 URL = 'file:///' + HTML_PATH.replace('\\', '/')
@@ -21,7 +29,12 @@ def get_driver():
     opts.add_argument('--disable-gpu')
     opts.add_argument('--window-size=1400,900')
     opts.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
-    d = webdriver.Chrome(options=opts); d.implicitly_wait(2); return d
+    try:
+        d = webdriver.Chrome(options=opts)
+    except WebDriverException as exc:
+        raise unittest.SkipTest(f'Chrome webdriver unavailable: {exc}') from exc
+    d.implicitly_wait(2)
+    return d
 
 class MetaRegressionTests(unittest.TestCase):
     @classmethod

@@ -6,6 +6,7 @@ Tests core calculations (via injected harness), UI interactions,
 example data loading, regression workflow, report generation, exports.
 """
 import sys, io, os, unittest, time, math, json
+from pathlib import Path
 
 # Only re-wrap stdout when this file is executed directly (python test_metaregression.py).
 # Under pytest, sys.stdout is already a capture fixture and wrapping its buffer
@@ -17,12 +18,26 @@ if __name__ == '__main__' and os.environ.get('PYTHONIOENCODING') is None and has
     except Exception:
         pass
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-HTML = 'file:///' + os.path.abspath(r'C:\Models\MetaRegression\meta-regression.html').replace('\\', '/')
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+HTML = (PROJECT_ROOT / 'meta-regression.html').resolve().as_uri()
+
+
+def _build_driver():
+    opts = Options()
+    opts.add_argument('--headless=new')
+    opts.add_argument('--no-sandbox')
+    opts.add_argument('--disable-gpu')
+    opts.add_argument('--window-size=1400,900')
+    try:
+        return webdriver.Chrome(options=opts)
+    except WebDriverException as exc:
+        raise unittest.SkipTest(f'Chrome webdriver unavailable: {exc}') from exc
 
 # JavaScript snippet to expose IIFE-internal functions for testing.
 # We re-run the pure-math portion on window so execute_script can call them.
@@ -79,12 +94,7 @@ class TestMetaRegression(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        opts = Options()
-        opts.add_argument('--headless=new')
-        opts.add_argument('--no-sandbox')
-        opts.add_argument('--disable-gpu')
-        opts.add_argument('--window-size=1400,900')
-        cls.drv = webdriver.Chrome(options=opts)
+        cls.drv = _build_driver()
         cls.drv.get(HTML)
         time.sleep(1.5)
         cls.drv.execute_script(INJECT_HARNESS)
