@@ -961,28 +961,33 @@ tr:hover td { background: var(--primary-light); }
   }
 
   function betaCF(x, a, b2) {
-    var maxIter = 200, eps = 1e-14;
-    var am = 1, bm = 1, az = 1;
+    // Modified Lentz's method for the continued fraction of the
+    // regularized incomplete beta (Numerical Recipes, betacf).
+    var maxIter = 200, eps = 3e-12, fpmin = 1e-300;
     var qab = a + b2, qap = a + 1, qam = a - 1;
-    var bz = 1 - qab * x / qap;
+    var c = 1;
+    var d = 1 - qab * x / qap;
+    if (Math.abs(d) < fpmin) d = fpmin;
+    d = 1 / d;
+    var h = d;
     for (var m = 1; m <= maxIter; m++) {
-      var em = m;
-      var tem = em + em;
-      var d2 = em * (b2 - em) * x / ((qam + tem) * (a + tem));
-      az = az + d2 * am;
-      bz = bz + d2 * bm;
-      d2 = -(a + em) * (qab + em) * x / ((a + tem) * (qap + tem));
-      am = az + d2 * am; // Not standard Lentz but simple approach
-      bm = bz + d2 * bm;
-      // Actually use Lentz's method properly:
-      // Restarting with proper continued fraction
-      if (Math.abs(bz) > 1e-30) {
-        var aold = az / bz;
-        am /= bz; bm /= bz; az /= bz; bz = 1;
-        if (Math.abs(aold - az) < eps * Math.abs(az)) return az;
-      }
+      var m2 = 2 * m;
+      // Even step
+      var aa = m * (b2 - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d; if (Math.abs(d) < fpmin) d = fpmin;
+      c = 1 + aa / c; if (Math.abs(c) < fpmin) c = fpmin;
+      d = 1 / d;
+      h *= d * c;
+      // Odd step
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d; if (Math.abs(d) < fpmin) d = fpmin;
+      c = 1 + aa / c; if (Math.abs(c) < fpmin) c = fpmin;
+      d = 1 / d;
+      var del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < eps) break;
     }
-    return az;
+    return h;
   }
 
   function lnGamma(x) {

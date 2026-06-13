@@ -6,11 +6,11 @@ Browser-based mixed-effects meta-regression with bubble plots, permutation tests
 
 ## Overview
 
-MetaRegression Workbench is the first fully browser-based meta-regression tool, implementing mixed-effects (random-effects) meta-regression models with support for up to 5 moderator variables (continuous or categorical). It includes Knapp-Hartung adjusted inference, permutation tests for moderator significance, bubble plots and subgroup forest plots, and an automated model comparison framework using AIC, BIC, and R-squared. All computations run client-side with no server dependencies.
+MetaRegression Workbench is a browser-based meta-regression tool, implementing mixed-effects (random-effects) meta-regression models with support for up to 5 moderator variables (continuous or categorical). It includes Knapp-Hartung adjusted inference, permutation tests for moderator significance, bubble plots and subgroup forest plots, and an automated model comparison framework using AIC, BIC, and R-squared. All computations run client-side with no server dependencies.
 
 ## Features
 
-- Mixed-effects meta-regression with REML estimation of residual heterogeneity
+- Mixed-effects meta-regression with method-of-moments (DerSimonian-Laird) estimation of residual heterogeneity
 - Support for up to 5 moderators (continuous and/or categorical)
 - Knapp-Hartung adjustment for confidence intervals and hypothesis tests
 - Permutation test (1000 iterations) for robust moderator significance assessment
@@ -43,7 +43,7 @@ MetaRegression Workbench is the first fully browser-based meta-regression tool, 
 ## Methods
 
 - Mixed-effects model: y_i = X_i * beta + u_i + e_i, where u_i ~ N(0, tau-squared) and e_i ~ N(0, sigma_i-squared)
-- REML estimation of residual tau-squared via iterative Fisher scoring
+- Iterative method-of-moments (DerSimonian-Laird-style) estimation of residual tau-squared
 - Knapp-Hartung adjustment: t-distribution with k - p degrees of freedom and adjusted SE
 - Permutation test: randomly permutes moderator values 1000 times to build null distribution of QM
 - Model comparison: AIC = -2*logLik + 2p; BIC = -2*logLik + p*log(k); R-squared = 1 - tau-squared_model / tau-squared_null
@@ -55,7 +55,7 @@ MetaRegression Workbench is the first fully browser-based meta-regression tool, 
 
 ## Validation
 
-- 25/25 Selenium tests pass
+- 38/38 Selenium tests pass
 - Cross-validated against the R metafor package rma() function (Viechtbauer 2010)
 
 ## Export
